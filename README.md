@@ -1,4 +1,2 @@
 # CleanCNA
-Subclonal copy number is called using Battenberg, DPClust takes Battenberg's output and clusters mutations by cancer cell fraction (CCF). 
-
-Metrics are calculated to assess the accuracy of the copy number call, adjusted purity (ρ) and ploidy (ψ) parameters are calculated if required, and the copy number profile is iteratively refitted where necessary. 
+Subclonal copy number is called using Battenberg, DPClust takes Battenberg's output and clusters mutations by cancer cell fraction (CCF). Metrics are calculated to assess the accuracy of the copy number call. Adjusted purity (ρ) and ploidy (ψ) parameters are calculated if required, and the copy number profile is iteratively refitted where necessary. A high quality set of copy number profiles is produced, and detailed metrics for inclusion or exclusion of samples is provided.   
