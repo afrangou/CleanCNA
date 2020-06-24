@@ -6,9 +6,7 @@
 # And sets up a reun of FitCopyNumber and CallSubclones and DPPrep2 and DPC2 if a rerun is needed
 # This is done by using the identified closest-to-clonal cluster and adjusting the purity and ploidy from this
 
-# sampledir = "/home/AFrangou/colorectal/battenberg_results/tumoX_normY/"
-#
-# # sampledir = "~/re_gecip/cancer_colorectal/analysisResults/2.chromosomeAberrations/I.Battenberg/01_Battenberg_original/ID/tumoX_normY/"
+# sampledir = "~/.../ID/tumoX_normY/"
 # participantid = "ID"
 # tumourplatekey = "X"
 # normalplatekey = "Y"
