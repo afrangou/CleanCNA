@@ -3,6 +3,27 @@
 # Beagle, NF
 #------------------------------------------------------------------------------------------------#
 
+#' @name
+#' GenerateDPinputt2BamAC_Beagle_nf
+#'
+#' @title
+#' Generate DP input (for Beagle, in Nextflow context)
+#'
+#' @description
+#' Converts snv counts from vcf into input format for DPClust
+#'
+#' @param
+#' Loci of SNP positions used in CNV call
+#' Allele frequencies of same SNP positions
+#' File containing purity and ploidy of tumour sample
+#' Subclones file from Battenberg containing copy number segments across genome
+#' Sex of patient
+#'
+#' @return
+#' A file containing all snv loci,
+#' their mutation copy number status,
+#' and their CCF (cancer cell fraction)
+
 GenerateDPinputt2BamAC_Beagle_nf <- function(tumourplatekey,
                                           normalplatekey,
                                           gender,
