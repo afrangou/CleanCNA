@@ -34,7 +34,15 @@ GenerateDPinput_strelka_vcf <- function(tumourplatekey,
                                         output_file,
                                         output_DPinput_file) {
 
-  # source(config_file)
+  print(tumourplatekey)
+  print(normalplatekey)
+  print(gender)
+  print(vcffilepath)
+  print(rhoandpsifilepath)
+  print(subcloneshg38filepath)
+  print(output_loci_file)
+  print(output_file)
+  print(output_DPinput_file)
 
   # definitions
   nucleotides = c("A","C","G","T")
