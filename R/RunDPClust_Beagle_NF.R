@@ -64,7 +64,7 @@ RunDPClust_Beagle_nf <- function(tumourplatekey,
 
     #This function does everything. It may be better to run separate functions to perform Gibbs sampling
     # and mutation assignment
-    CleanCNA:::DirichletProcessClustering(mutCount = mutCount,
+    DPClust:::DirichletProcessClustering(mutCount = mutCount,
                                WTCount = WTCount,
                                totalCopyNumber = totalCopyNumber,
                                copyNumberAdjustment = copyNumberAdjustment,
