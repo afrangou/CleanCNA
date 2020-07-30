@@ -80,7 +80,7 @@ RunDPClust_Beagle_nf <- function(tumourplatekey,
                                mut.assignment.type = 1,
                                most.similar.mut = NA,
                                mutationTypes = NA,
-                               min.frac.snvs.cluster = NA,
+                               #min.frac.snvs.cluster = NA,
                                max.considered.clusters=30)
 
     print(paste0("Clustering has run for ",tumourplatekey,"_",normalplatekey))
