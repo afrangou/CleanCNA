@@ -27,9 +27,9 @@ ComputePeaksVAF_nf <- function(filename.ssm,
   # message(filename.ssm)
   # chrs = 1:22
   # message(chrs)
-  snvs <- read.snvs(filename.ssm, chrs,nucleotides=c("A", "C", "G", "T"))
+  snvs <- CleanCNA:::read.snvs(filename.ssm, chrs,nucleotides=c("A", "C", "G", "T"))
   message(paste(filename.ssm," - vcf read"))
-  segs <- read.segs(filename.segs, chrs)
+  segs <- CleanCNA:::read.segs(filename.segs, chrs)
   message(paste(filename.segs," - subclones read"))
   purity.ploidy <- read.delim(filename.purity.ploidy, sep="\t", header=T, stringsAsFactors=F)
   message(paste(filename.purity.ploidy," - purity read"))
@@ -66,7 +66,7 @@ ComputePeaksVAF_nf <- function(filename.ssm,
 
       # identify peaks in segments
       peaks$states[[state]]$den <- density(peaks$states[[state]]$vafs, kernel="gaussian", n=2048) # run KDE
-      peaks$states[[state]]$peaks <- call.peaks(peaks$states[[state]]$den)
+      peaks$states[[state]]$peaks <- CleanCNA:::call.peaks(peaks$states[[state]]$den)
       peaks.avail <- peaks$states[[state]]$peaks[peaks$states[[state]]$peaks$y > thres.peaks.y, ] # consider peaks with y value greater than threshold available for matching
 
       for (i in nrow(peaks$states[[state]]$expected.locs):1) {
@@ -88,7 +88,7 @@ ComputePeaksVAF_nf <- function(filename.ssm,
 
           # reestimate purity using best-matching peak, and claim success if the reestimated purity is less than 1
           peak.matched <- peaks.avail$x[best.peak]
-          purity.reestimated <- reestimate.purity(peak.matched, multiplicity, peaks$states[[state]]$expected.locs$ploidy[i])
+          purity.reestimated <- CleanCNA:::reestimate.purity(peak.matched, multiplicity, peaks$states[[state]]$expected.locs$ploidy[i])
           match.successful <- purity.reestimated < 1
 
           # remove as available peak if the match was unsuccessful (previously also removed successful matched if other peaks were available, but now stopped doing this. should look out to see whether this reinstroduced the balanced error issue)
