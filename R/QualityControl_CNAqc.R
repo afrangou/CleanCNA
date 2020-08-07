@@ -322,8 +322,8 @@ qc_CNAqc <- function(
       # if these mutations exist, the position of this peak must be within a certain distance of expected peak
       # in order to qualify as these 2:2 peaks existing - this is evidence of proper tetraploidy as there are
       # mutations at multiplicity 1 and 2 in 2:2 regions
-      mult1.match <- ifelse(length(mult1), abs(expected.locs$peak.diff[mult1]) < thres.incorrecttetraploid.peak.diff, FALSE)
-      mult2.match <- ifelse(length(mult2), abs(expected.locs$peak.diff[mult2]) < thres.incorrecttetraploid.peak.diff, FALSE)
+      mult1.match <- ifelse(length(mult1)>0, abs(expected.locs$peak.diff[mult1]) < thres.incorrecttetraploid.peak.diff, FALSE)
+      mult2.match <- ifelse(length(mult2)>0, abs(expected.locs$peak.diff[mult2]) < thres.incorrecttetraploid.peak.diff, FALSE)
       qc[id, pasteu(run.name, "vafpeaks_tetraploid")] <- mult1.match & mult2.match
 
       # add other information from vafpeaks
