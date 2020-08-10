@@ -1,5 +1,5 @@
 # complete QC of Battenberg output
-# written by Alex J. Cornish and Anna Frangou
+# written by Anna Frangou and Alex J. Cornish
 #
 # usage:
 # Rscript QC.R [RUN] [DIR_BATTENBERG] [SUBDIR_CALLSUBCLONES] [SUBDIR_POSTPROCESSING] [SUBDIR_DPCLUST] [SUBDIR_VAFPEAKS] [FILENAME_SAMPLELIST] [FILENAME_CONFIG] [FILENAME_CHRSIZES] [FILENAME_QC]
@@ -328,7 +328,7 @@ qc_CNAqc <- function(
 
       # add other information from vafpeaks
       #qc[id, pasteu(run.name, "vafpeaks_purity")] <- peaks$summary$purity.new
-      qc[id, pasteu(run.name, "vafpeaks_purity")] <- peaks$purity
+      qc[id, pasteu(run.name, "vafpeaks_purity")] <- qc[id, pasteu(run.name, "battenberg_purity")]+peaks$peaks_analysis$score
       qc[id, pasteu(run.name, "vafpeaks_ploidy")] <- estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")],
                                                                          qc[id, pasteu(run.name, "battenberg_ploidy")],
                                                                          qc[id, pasteu(run.name, "vafpeaks_purity")])
