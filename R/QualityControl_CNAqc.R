@@ -159,7 +159,7 @@ qc_CNAqc <- function(
   qc[ids, pasteu(run.name, "dpclust_purity")] <- sapply(ids, function(id) estimate.dpclust.purity(dpclust[[id]], qc[id, pasteu(run.name, "battenberg_purity")]))
   qc[ids, pasteu(run.name, "dpclust_ploidy")] <- sapply(ids, function(id) estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")], qc[id, pasteu(run.name, "battenberg_ploidy")], qc[id, pasteu(run.name, "dpclust_purity")]))
   qc[ids, pasteu(run.name, "fivepc_cluster_size")] <- fivepcclusters[ids]
-  for (str in c("vafpeaks_purity", "vafpeaks_ploidy", "vafpeaks_eta", "reestimated_purity", "reestimated_ploidy")) qc[[pasteu(run.name, str)]] <- NA
+  for (str in c("vafpeaks_purity", "vafpeaks_ploidy", "vafpeaks_score", "reestimated_purity", "reestimated_ploidy")) qc[[pasteu(run.name, str)]] <- NA
 
   # compute statistics required for QC for each sample
   log.message("computing QC statistics")
@@ -329,11 +329,14 @@ qc_CNAqc <- function(
       # add other information from vafpeaks
       #qc[id, pasteu(run.name, "vafpeaks_purity")] <- peaks$summary$purity.new
       qc[id, pasteu(run.name, "vafpeaks_purity")] <- qc[id, pasteu(run.name, "battenberg_purity")]+peaks$peaks_analysis$score
+      # if this purity goes below 5%, fix it at 5%, if it goes above 95%, fix it at 95%
+      if (qc[id, pasteu(run.name, "vafpeaks_purity")]<0.05) {qc[id, pasteu(run.name, "vafpeaks_purity")]=0.05}
+      if (qc[id, pasteu(run.name, "vafpeaks_purity")]>0.95) {qc[id, pasteu(run.name, "vafpeaks_purity")]=0.95}
       qc[id, pasteu(run.name, "vafpeaks_ploidy")] <- estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")],
                                                                          qc[id, pasteu(run.name, "battenberg_ploidy")],
                                                                          qc[id, pasteu(run.name, "vafpeaks_purity")])
-      #qc[id, pasteu(run.name, "vafpeaks_eta")] <- peaks$summary$eta
-      qc[id, pasteu(run.name, "vafpeaks_eta")] <-peaks$peaks_analysis$score
+      #qc[id, pasteu(run.name, "vafpeaks_score")] <- peaks$summary$eta
+      qc[id, pasteu(run.name, "vafpeaks_score")] <-peaks$peaks_analysis$score
     }
 
 
@@ -365,8 +368,8 @@ qc_CNAqc <- function(
                                                                  qc[id, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest |
                                                                  qc[id, pasteu(run.name, "nclonalpeaks")] == 0 |
                                                                  qc[id, pasteu(run.name, "nsuperclonalpeaks")] != 0 |
-                                                                 is.na(qc[id, pasteu(run.name, "vafpeaks_eta")]) |
-                                                                 qc[id, pasteu(run.name, "vafpeaks_eta")] > thres.purity.diff,"FAIL","PASS")
+                                                                 is.na(qc[id, pasteu(run.name, "vafpeaks_score")]) |
+                                                                 qc[id, pasteu(run.name, "vafpeaks_score")] > thres.purity.diff,"FAIL","PASS")
 
     # select reestimated purity/ploidy (these are only used if sample fails with filters)
     # if sample's ploidy is deemed wrong, make these the new parameters
@@ -380,12 +383,12 @@ qc_CNAqc <- function(
     }
     # if ploidy type passes, and we have vafpeaks params, run with those (if we don't have vafpeaks here, use dpclust)
     if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" &
-        # (qc[id, pasteu(run.name, "vafpeaks_eta")] > thres.purity.diff &
-        !is.na(qc[id, pasteu(run.name, "vafpeaks_eta")])) {
+        # (qc[id, pasteu(run.name, "vafpeaks_score")] > thres.purity.diff &
+        !is.na(qc[id, pasteu(run.name, "vafpeaks_score")])) {
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "vafpeaks_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "vafpeaks_ploidy")]
     } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" &
-               is.na(qc[id, pasteu(run.name, "vafpeaks_eta")])) {
+               is.na(qc[id, pasteu(run.name, "vafpeaks_score")])) {
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
     }
@@ -413,7 +416,7 @@ qc_CNAqc <- function(
   filters$superclonalpeaks <- ifelse(qc[ids, pasteu(run.name, "nsuperclonalpeaks")] != 0, "FAIL", "PASS")
 
   # vafpeaks filter must have passed
-  filters$vafpeaks <- ifelse(qc[ids, pasteu(run.name, "vafpeaks_eta")] > 0.05, "FAIL", "PASS")
+  filters$vafpeaks <- ifelse(peaks$peaks_analysis$QC=="FAIL", "FAIL", "PASS")
 
   # the ploidy call must be deemed correct, so if diploid, must have a ploidy <=2.6, and
   # can have no more than qc.config threshold of the genome between 0.5 boundary (if narrow sample (same boundary), or
