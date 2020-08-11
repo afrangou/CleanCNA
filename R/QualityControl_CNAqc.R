@@ -328,7 +328,7 @@ qc_CNAqc <- function(
 
       # add other information from vafpeaks
       #qc[id, pasteu(run.name, "vafpeaks_purity")] <- peaks$summary$purity.new
-      qc[id, pasteu(run.name, "vafpeaks_purity")] <- qc[id, pasteu(run.name, "battenberg_purity")]+peaks$peaks_analysis$score
+      qc[id, pasteu(run.name, "vafpeaks_purity")] <- qc[id, pasteu(run.name, "battenberg_purity")]-peaks$peaks_analysis$score
       # if this purity goes below 5%, fix it at 5%, if it goes above 95%, fix it at 95%
       if (qc[id, pasteu(run.name, "vafpeaks_purity")]<0.05) {qc[id, pasteu(run.name, "vafpeaks_purity")]=0.05}
       if (qc[id, pasteu(run.name, "vafpeaks_purity")]>0.95) {qc[id, pasteu(run.name, "vafpeaks_purity")]=0.95}
