@@ -394,7 +394,7 @@ qc_CNAqc <- function(
     }
     # if ploidy passes, and we're on the last run, overwrite vafpeaks params with dpclust params
     # if ploidy has failed, it reruns with new ploidy as above (this could flipflop)
-    if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" & run.name=="run4") {
+    if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" & run.name=="run3") {
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
     }
