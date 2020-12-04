@@ -13,14 +13,6 @@ log.message <- function(x, level=0) message(paste0("[", Sys.time(), "] ", paste(
 
 # estimate.new.ploidy <- function(rho.old, psi.old, rho.new) (rho.old * (psi.old - 2) + 2 * rho.new) / rho.new # from eq. S5, Van Loo et al. (PNAS, 2010)
 
-#ploidy>fracLOH*-2+2.9 (where LOH is restricted to autosomes only).
-# rounded minor CN =
-#minorCNround = round(BB$nMin1_A*BB$frac1_A+BB$nMin2_A*BB$frac2_A)
-# once you’ve converted NAs into 0s. In the end, 60% 1+1 and 40% 1+0 would be minorCN=1
-# whereas 40%1+1 and 60% 1+0 would be minorCN=0.
-#Ploidy= sum of {segment sizes *(nMaj+nMin)} divided by sum of segment sizes
-#psi_t = sum()
-
 estimate.new.ploidy <- function(rho.old, psi.old, rho.new) {
   if (psi.old == "tetra") {ploidytype = "tetra"} else {ploidytype = "dip"}
   if (ploidytype=="dip") {psi.new = ((rho.old * psi.old) + 2*(rho.new - rho.old)) / rho.new}
