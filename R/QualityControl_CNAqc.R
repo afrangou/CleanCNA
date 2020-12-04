@@ -13,22 +13,30 @@ log.message <- function(x, level=0) message(paste0("[", Sys.time(), "] ", paste(
 
 # estimate.new.ploidy <- function(rho.old, psi.old, rho.new) (rho.old * (psi.old - 2) + 2 * rho.new) / rho.new # from eq. S5, Van Loo et al. (PNAS, 2010)
 
+#ploidy>fracLOH*-2+2.9 (where LOH is restricted to autosomes only).
+# rounded minor CN =
+#minorCNround = round(BB$nMin1_A*BB$frac1_A+BB$nMin2_A*BB$frac2_A)
+# once you’ve converted NAs into 0s. In the end, 60% 1+1 and 40% 1+0 would be minorCN=1
+# whereas 40%1+1 and 60% 1+0 would be minorCN=0.
+#Ploidy= sum of {segment sizes *(nMaj+nMin)} divided by sum of segment sizes
+#psi_t = sum()
+
 estimate.new.ploidy <- function(rho.old, psi.old, rho.new) {
-  if (psi.old > 2.6) {ploidytype = "tetra"} else {ploidytype = "dip"}
+  if (psi.old == "tetra") {ploidytype = "tetra"} else {ploidytype = "dip"}
   if (ploidytype=="dip") {psi.new = ((rho.old * psi.old) + 2*(rho.new - rho.old)) / rho.new}
   if (ploidytype=="tetra") {psi.new = ((rho.old * psi.old) + 4*(rho.new - rho.old)) / rho.new}
   return(psi.new)
 }
 
 switch.ploidy.get.purity <- function(rho.old,psi.old) {
-  if (psi.old > 2.6) {ploidytype = "tetra"} else {ploidytype = "dip"}
+  if (psi.old == "tetra") {ploidytype = "tetra"} else {ploidytype = "dip"}
   if (ploidytype == "tetra") {rho.new = 2*rho.old / (rho.old+1)}
   if (ploidytype == "dip")  {rho.new = rho.old / (2-rho.old)}
   return(rho.new)
 }
 
 switch.ploidy.get.ploidy <- function(rho.old,psi.old) {
-  if (psi.old > 2.6) {ploidytype = "tetra"} else {ploidytype = "dip"}
+  if (psi.old == "tetra") {ploidytype = "tetra"} else {ploidytype = "dip"}
   if (ploidytype == "tetra") {psi.new = psi.old/2}
   if (ploidytype == "dip")  {psi.new = psi.old*2}
   return(psi.new)
@@ -206,6 +214,13 @@ qc_CNAqc <- function(
         segs.auto$frac1_A == 1,
       ] # copy number is 1:0 and there is no evidence of sub-clonal change
 
+    #minorCNround = round(segs.auto$nMin1_A*segs.auto$frac1_A+segs.auto$nMin2_A*segs.auto$frac2_A)
+    segs.auto2 = segs.auto
+    segs.auto2[is.na(segs.auto2)] = 0
+    segs.conditions$minorCNzero <- segs.auto2[
+      (which(round((segs.auto2$nMin1_A*segs.auto2$frac1_A)+(segs.auto2$nMin2_A*segs.auto2$frac2_A))==0)),
+      ] # minor CN of 0 after rounding copy number, allows us to define a sample as diploid or tetraploid
+
     segs.conditions$copynumber21 <- segs.auto[
       ((segs.auto$nMaj1_A == 2 & segs.auto$nMin1_A == 1) | (segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 2)) &
         segs.auto$frac1_A == 1,
@@ -250,6 +265,11 @@ qc_CNAqc <- function(
       qc[id, pasteu(run.name, "fgenome", condition)] <- qc[id, pasteu(run.name, "lsegs", condition)] / sum(segs.conditions$all$size)
     }
 
+    # add tumour ploidy, ie psi_t (different to average ploidy)
+    qc[id, pasteu(run.name, "psi_t")] <- sum(segs.auto$size * (segs.auto$nMaj1_A + segs.auto$nMin1_A))/sum(segs.auto$size)
+    # add fraction of LOH *-2 +2.9 (from PCAWG equation)
+    qc[id, pasteu(run.name, "minorCNzerotimesminus2plus2.9")] <- (qc[id,pasteu(run.name,"fgenome_minorCNzero")]*-2)+2.9
+
     # define sample as 'narrow' if there is one cluster within 0.95-1.05 and 0.45-0.55 (or as per config file)
     # or 'wide' if there are two clusters in either of those boundaries
     # classify sample as narrow or wide
@@ -257,6 +277,13 @@ qc_CNAqc <- function(
                                                                  dpclust[[id]]$location <= thres.clonalpeak.upper.wide)>1) |
                                                             (sum(dpclust[[id]]$location >= thres.50pcpeak.lower.wide &
                                                                    dpclust[[id]]$location <= thres.50pcpeak.upper.wide)>1)),"wide","narrow")
+
+
+    # classify sample as currently diploid or tetraploid
+    # if qc$psi_t > qc$minorCNzerotimesminus2plus2.9, then tetraploid, otherwise diploid
+    qc[id, pasteu(run.name, "dip.or.tetra")] <- ifelse(qc[id,pasteu(run.name,"psi_t")] > qc[id,pasteu(run.name,"minorCNzerotimesminus2plus2.9")],
+                                                       "tetra",
+                                                       "dip")
 
     # peak closest to clonal
     qc[id, pasteu(run.name, "peak.closest.to.clonal")] <- min(abs(1-dpclust[[id]]$location))
@@ -342,7 +369,8 @@ qc_CNAqc <- function(
 
     # give a call for whether the ploidy is judged to be correct by our criteria
     # if diploid, else if tetraploid
-    qc[id, pasteu(run.name, "ploidy_type_accepted")] <- if (qc[id,pasteu(run.name,"battenberg_ploidy")]<=2.6) {
+    #qc[id, pasteu(run.name, "ploidy_type_accepted")] <- if (qc[id,pasteu(run.name,"battenberg_ploidy")]<=2.6) {
+    qc[id, pasteu(run.name, "ploidy_type_accepted")] <- if (qc[id,pasteu(run.name,"dip.or.tetra")]=="dip") {
       if (qc[id,pasteu(run.name,"narrow.or.wide")]=="narrow") {
         ifelse(qc[id,pasteu(run.name,"fgenome_aroundpoint5.narrow")] <= thres.incorrectdiploid.aroundpoint5 |
                  qc[id,pasteu(run.name,"n50pcpeaks")]==0,"PASS","FAIL")
@@ -350,7 +378,8 @@ qc_CNAqc <- function(
         ifelse(qc[id,pasteu(run.name,"fgenome_aroundpoint5.wide")] <= thres.incorrectdiploid.aroundpoint5 |
                  qc[id,pasteu(run.name,"n50pcpeaks")]==0,"PASS","FAIL")
       }
-    } else if (qc[id,pasteu(run.name,"battenberg_ploidy")] > 2.6) {
+    #} else if (qc[id,pasteu(run.name,"battenberg_ploidy")] > 2.6) {
+    } else if (qc[id,pasteu(run.name,"dip.or.tetra")] == "tetra") {
       ifelse(qc[id,pasteu(run.name,"fgenome_cnodd")] >= thres.incorrecttetraploid.cnodd,"PASS","FAIL")
     }
 
@@ -418,11 +447,11 @@ qc_CNAqc <- function(
   # vafpeaks filter must have passed
   filters$vafpeaks <- ifelse(peaks$peaks_analysis$QC=="FAIL", "FAIL", "PASS")
 
-  # the ploidy call must be deemed correct, so if diploid, must have a ploidy <=2.6, and
+  # the ploidy call must be deemed correct, so if diploid, must have a ploidy classified as diploid through PCAWG eqn, and
   # can have no more than qc.config threshold of the genome between 0.5 boundary (if narrow sample (same boundary), or
   # can have a cluster of mutations between narrow 0.5 boundary if narrow sample (or wide boundary if wide sample)
   # but can't have both
-  # and if tetraploid, must have a ploidy >2.6, and
+  # and if tetraploid, must have a ploidy classified as tetraploid through PCAWG eqn (psi_t>LOH*-2+2.9)=tetra, else dip), and
   # must have at least 10% of the genome at 1+0, 2+1, or 3+2 states, and
   # must have peaks of mutations in 2:2 regions with multiplicity 1 and 2
   filters$ploidytype <- ifelse(qc[ids, pasteu(run.name,"ploidy_type_accepted")] == "PASS", "PASS", "FAIL")
