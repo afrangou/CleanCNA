@@ -24,3 +24,4 @@
 #' A summary table
 
 x=3
+y=4
