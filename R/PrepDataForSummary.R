@@ -23,5 +23,25 @@
 #' @return
 #' A summary table
 
-x=3
-y=4
+prepDataForSummary <- function(qctabledir, subclonesdir) {
+
+  qc <- read.csv(qctabledir,
+                 sep="\t",
+                 stringsAsFactors=F)
+
+  outputTable <- qc[,c("participant_id",
+                       "tumour_sample_platekey",
+                       "germline_sample_platekey")]
+
+  subclonesPaths <- paste0(subclonesdir,
+                           outputTable$tumour_sample_platekey,
+                           "_subclones.txt")
+
+  purityPaths <- paste0(subclonesdir,
+                        outputTable$tumour_sample_platekey,
+                        "_cellularity_ploidy.txt")
+
+  qc <- cbind(qc,subclonesPaths,purityPaths)
+
+}
+
