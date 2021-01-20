@@ -12,7 +12,7 @@ prepDataForSummary(qctabledir, subclonesdir)
 Dir of subclones and cellularity files}
 }
 \value{
-A summary table
+A summary table for producing CNA summary plots
 }
 \description{
 Converts snv counts from vcf into input format for DPClust

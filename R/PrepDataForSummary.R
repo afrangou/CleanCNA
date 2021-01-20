@@ -21,7 +21,7 @@
 #' Dir of subclones and cellularity files
 #'
 #' @return
-#' A summary table
+#' A summary table for producing CNA summary plots
 
 prepDataForSummary <- function(qctabledir, subclonesdir) {
 
@@ -42,6 +42,8 @@ prepDataForSummary <- function(qctabledir, subclonesdir) {
                         "_cellularity_ploidy.txt")
 
   qc <- cbind(qc,subclonesPaths,purityPaths)
+
+  return(qc)
 
 }
 
