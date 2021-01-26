@@ -51,7 +51,7 @@ CollateSubclones <- function(qc,
 
   for (i in 1:length(subclones)) {
 
-    sub <- read.csv(subclones[i],
+    sub <- read.csv(subclonesPaths[i],
                    hea=T,
                    stringsAsFactors=F,
                    sep="\t")[,c(1:13)]
