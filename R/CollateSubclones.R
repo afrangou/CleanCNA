@@ -163,19 +163,26 @@ CodeSegments <- function(segfile_dir,segfile_name) {
   subs$chr = paste0("chr",subs$chr)
   cnv_levels <- c("homdel","lohs","nochange","gain","biggain")
   cnv_numbers = c(-2,-1,-0.5,2,5,10)
-  for (cnv in 1:length(cnvs)) {
+  for (cnv in 1:length(cnvs_levels)) {
 
     cnv_subs = subs[which(subs$coded_total_cn==cnv_levels[cnv]),]
     cnv_subs = cnv_subs[order(cnv_subs$chr,cnv_subs$startpos,cnv_subs$endpos),]
-    # write.table(cnv_subs,)
 
     # write full file
-    write.table(cnv_subs,paste0(bedfile_dir,cnvs[cnv],"_",bedfile_name,"_normalised.full"),quote=F,row.names=F,sep="\t")
+    write.table(cnv_subs,paste0(segfile_dir,cnv_levels[cnv],"_",segfile_name,"_normalised.full"),
+                quote=F,
+                row.names=F,
+                sep="\t")
+
     # write as bedfile for bedtools
     subs_bed = cbind(cnv_subs[c("chr","startpos","endpos","sample")])
     colnames(subs_bed)[4]="name"
     print(nrow(subs_bed))
-    write.table(subs_bed,paste0(bedfile_dir,cnvs[cnv],"_",bedfile_name,"_normalised.bed"),quote=F,row.names=F,col.names=F,sep="\t")
+    write.table(subs_bed,paste0(segfile_dir,cnv_levels[cnv],"_",segfile_name,"_normalised.bed"),
+                quote=F,
+                row.names=F,
+                col.names=F,
+                sep="\t")
   }
 
 
