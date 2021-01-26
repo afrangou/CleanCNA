@@ -28,14 +28,26 @@ CollateSubclones <- function(qc,
 
   # structure of final table
   subsfull = matrix(nrow=0,ncol=13)
-  colnames(subsfull) = c("sample","chr","startpos","endpos","nMajor","nMinor")
+  #colnames(subsfull) = c("sample","chr","startpos","endpos","nMajor","nMinor")
 
   # paths of subclones files
   qc <- read.csv(qc,
                  sep="\t",
                  stringsAsFactors=F)
 
-  subclones <- qc$subclonesPaths
+  samples <- paste0(qc$participant_id,".",
+                    qc$tumour_sample_platekey,".",
+                    qc$germline_sample_platekey)
+
+  # get subclones paths
+  subclones <- list.files(segfile_dir)
+  subclonesPaths <- paste0(segfile_dir,subclones[grep("subclones",subclones)])
+
+  # get purity paths
+  purity <- list.files(segfile_dir)
+  purityPaths <- paste0(segfile_dir,purity[grep("cellularity",purity)])
+
+  # check same number and name of purity and subclones paths
 
   for (i in 1:length(subclones)) {
 
@@ -61,7 +73,7 @@ CollateSubclones <- function(qc,
     colnames(sub)[1:6]=c("sample","chr","startpos","endpos","nMajor","nMinor")
 
     # add ploidy for sample
-    sub$ploidy = signif(read.table(qc$purityPaths[i]),hea=T,stringsAsFactors=F)[1,3]
+    sub$ploidy = signif(read.table(purityPaths[i],hea=T,stringsAsFactors=F)[1,3])
 
     # length of segment
     sub$size = sub$endpos - sub$startpos +1
@@ -70,11 +82,11 @@ CollateSubclones <- function(qc,
     # minor CN of 0 after rounding CN
     # use separate table for this
     sub2 <- sub
-    sub2 <- sub2[1:max(whichsub2$chr==22)]
+    sub2 <- sub2[1:max(which(sub2$chr==22)),]
     sub2[is.na(sub2)] <- 0
     # LOH regions
     genome.length <- 2923364639
-    sub2fracLOH <- sub2[which(round((sub2$nMinor*sub2$frac1_A)+(sub2nMin2_A*sub2$frac2_A))==0)]
+    sub2fracLOH <- sub2[which(round((sub2$nMinor*sub2$frac1_A)+(sub2$nMin2_A*sub2$frac2_A))==0),]
     sub2fracLOH <- sum(sub2fracLOH$endpos-sub2fracLOH$startpos)/genome.length
     # calculate psi_t, different to average tumour ploidy
     sub$psi_t <- sum(sub2$size * (sub2$nMajor + sub2$nMinor))/sum(sub2$size)
