@@ -120,7 +120,7 @@ CollateSubclones <- function(qc,
 
 
 # code all segments into homdel, loh, otherloss, no change, gain, big gain
-CodeSegments <- function(subsfull) {
+CodeSegments <- function(segfile_dir,segfile_name) {
 
   subs <- read.table(paste0(segfile_dir,
                             segfile_name,
