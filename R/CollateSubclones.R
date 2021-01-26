@@ -167,7 +167,7 @@ CodeSegments <- function(segfile_dir,segfile_name) {
 
     cnv_subs = subs[which(subs$coded_total_cn==cnv_levels[cnv]),]
     cnv_subs = cnv_subs[order(cnv_subs$chr,cnv_subs$startpos,cnv_subs$endpos),]
-    write.table(cnv_subs,)
+    # write.table(cnv_subs,)
 
     # write full file
     write.table(cnv_subs,paste0(bedfile_dir,cnvs[cnv],"_",bedfile_name,"_normalised.full"),quote=F,row.names=F,sep="\t")
