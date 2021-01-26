@@ -49,7 +49,7 @@ CollateSubclones <- function(qc,
 
   # check same number and name of purity and subclones paths
 
-  for (i in 1:length(subclones)) {
+  for (i in 1:length(subclonesPaths)) {
 
     sub <- read.csv(subclonesPaths[i],
                    hea=T,
