@@ -31,6 +31,10 @@ CollateSubclones <- function(qc,
   colnames(subsfull) = c("sample","chr","startpos","endpos","nMajor","nMinor")
 
   # paths of subclones files
+  qc <- read.csv(qc,
+                 sep="\t",
+                 stringsAsFactors=F)
+
   subclones <- qc$subclonesPaths
 
   for (i in 1:length(subclones)) {
