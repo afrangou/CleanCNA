@@ -163,7 +163,7 @@ CodeSegments <- function(segfile_dir,segfile_name) {
   subs$chr = paste0("chr",subs$chr)
   cnv_levels <- c("homdel","lohs","nochange","gain","biggain")
   cnv_numbers = c(-2,-1,-0.5,2,5,10)
-  for (cnv in 1:length(cnvs_levels)) {
+  for (cnv in 1:length(cnv_levels)) {
 
     cnv_subs = subs[which(subs$coded_total_cn==cnv_levels[cnv]),]
     cnv_subs = cnv_subs[order(cnv_subs$chr,cnv_subs$startpos,cnv_subs$endpos),]
