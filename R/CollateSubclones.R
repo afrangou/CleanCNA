@@ -161,7 +161,7 @@ CodeSegments <- function(segfile_dir,segfile_name) {
   # separate into CNA types
   subs <- subs[order(subs$chr,subs$startpos,subs$endpos),]
   subs$chr = paste0("chr",subs$chr)
-  cnv_levels <- c("homdel","lohs","nochange","gain","biggain")
+  cnv_levels <- c("homdel","loh","nochange","gain","biggain")
   cnv_numbers = c(-2,-1,-0.5,2,5,10)
   for (cnv in 1:length(cnv_levels)) {
 
