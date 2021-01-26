@@ -142,7 +142,7 @@ CodeSegments <- function(segfile_dir,segfile_name) {
   # homdels
   subs$coded_total_cn[which(subs$total_cn==0)] = "homdel"
   # LOH
-  subs$coced_total_cn[which(subs$nMajor>0 & subs$nMinor==0)] = "loh"
+  subs$coded_total_cn[which(subs$nMajor>0 & subs$nMinor==0)] = "loh"
   # other loss (non homdel, non LOG)
   subs$coded_total_cn[which(subs$total_cn < subs$dip.tetra
                             & subs$total_cn != 0
