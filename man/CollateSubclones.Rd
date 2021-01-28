@@ -4,10 +4,12 @@
 \alias{CollateSubclones}
 \title{Collate all segments in all samples in the cohort}
 \usage{
-CollateSubclones(qc)
+CollateSubclones(qc, segfile_dir, segfile_name)
 }
 \arguments{
-\item{qc}{table from PrepDataForSummary}
+\item{qc}{table from PrepDataForSummary
+segfile_dir = where segfile will go
+segfile_name = cohort name}
 }
 \value{
 A table for use with bedtools etc
