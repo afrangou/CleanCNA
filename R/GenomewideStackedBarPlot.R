@@ -25,9 +25,15 @@
 GenomewideStackedBarPlot <- function(filestub,
                                  segfile_name,
                                  number_samples) {
-
+  # load libs
   library(scales)
   library(ggplot2)
+
+  # load file
+  toplot = read.table(paste0(filestub,segfile_name,"_partitioned_regions_all_CNA_types_overlapped.out"),
+                      hea=T,
+                      stringsAsFactors=F,
+                      fill=T)
 
   # centromeres for hg38
   centro = data.frame(pos=c(123400000, 93900000, 90900000,
@@ -47,19 +53,21 @@ GenomewideStackedBarPlot <- function(filestub,
   lohcol = colours[5]
   homdelcol = colours[4]
 
-  # make plot
-  pdf(paste0(filestub,segfile_name,"_genomewide_stacked_bar.pdf"),
-      width=10,height=6)
-    ggplot(toplot) +
+  # change to proportions
+  for (column in 4:15) {toplot[,column]=(toplot[,column]/number_samples)*100}
+
+  # gains plot
+  gainstoplot = toplot[,c(1:3,8:9,11:12),]
+  gainstoplot$value2 = toplot$gain
+  gainstoplot$value3 = toplot$gain + toplot$biggain
+
+  pdf(paste0(filestub,segfile_name,"_genomewide_stackedbar_gains.pdf"),
+      width=10,height=2)
+
+    ggplot(gainstoplot) +
       # above x axis
-      geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = value, fill = nochangecol)) +
-      geom_rect(aes(ymin = value, xmin = posleft, xmax = posright, ymax = value2, fill = gaincol)) +
+      geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = value2, fill = gaincol)) +
       geom_rect(aes(ymin = value2, xmin = posleft, xmax = posright, ymax = value3, fill = biggainpcol)) +
-      # geom_rect(aes(ymin = value3, xmin = posleft, xmax = posright, ymax = value4, fill = pentapcol)) +
-      # below x axis
-      geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = valueneg, fill = otherlosscol)) +
-      geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = valueneg, fill = lohcol)) +
-      geom_rect(aes(ymin = valueneg, xmin = posleft, xmax = posright, ymax = valueneg2, fill = homdelcol)) +
       # ylabel
       ylab("% tumour samples") +
       # split into chrs
@@ -69,16 +77,16 @@ GenomewideStackedBarPlot <- function(filestub,
             axis.text.x=element_blank(),
             axis.ticks.x=element_blank()) +
       # control y axis scaling
-      coord_cartesian(ylim=c(-100,100)) +
-      scale_y_continuous(breaks = c(50, 100, -50, -100, 0),
-                         labels = c(50, 100, 50, 100, 0)) +
-      # add black line for chr and dot for centromere
+      coord_cartesian(ylim=c(0,50)) +
+      scale_y_continuous(breaks = c(0, 10, 20, 30, 40,50),
+                         labels = c(0, 10, 20, 30, 40,50)) +
+      #add black line for chr and dot for centromere
       scale_x_continuous(breaks = NULL) +
       geom_point(data=centro, aes(x=pos,y=0), size=1.5) +
       geom_hline(yintercept=0, colour="black", size=0.5) +
       # add legend
-      scale_fill_manual(values = c(nochangecol,gaincol,biggainpcol,otherlosscol,lohcol,homdelcol),
-                        labels =c("nochange","gain","biggain","otherloss","loh","homdel"))
+      scale_fill_manual(values = c(gaincol,biggainpcol),
+                        labels =c("gain","biggain"))
 
   dev.off()
 
