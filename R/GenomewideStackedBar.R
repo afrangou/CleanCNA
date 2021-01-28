@@ -25,7 +25,8 @@
 # collate all segments in subclones files across cohort
 GenomewideStackedBar <- function(filestub,segfile_name) {
 
-  all = read.table("/re_gecip/cancer_ovarian/endometrial_current/analyses_v8/battenberg_summary/plots/ENDOMETRIAL_partitioned_regions_all_CNA_types_overlapped.out",
+  all = read.table(filestub,"_",segfile_name,
+                   "_partitioned_regions_all_CNA_types_overlapped.out",
                    sep="\t",
                    stringsAsFactors=F)
 
@@ -44,11 +45,10 @@ GenomewideStackedBar <- function(filestub,segfile_name) {
   gain = rep(0,nrow(forplot))
   biggain = rep(0,nrow(forplot))
 
-  # forplot = as.data.frame(cbind(forplot,homdel,loh,dip,trip,tetrap,pentaplus))
   forplot = as.data.frame(cbind(forplot,homdel,loh,otherloss,nochange,gain,biggain))
   for (i in 2:ncol(forplot)) {forplot[,i]=as.integer(as.character(forplot[,i]))}
-  # cnas = c("homdel","loh","dip","trip","tetrap","pentaplus")
   cnas = c("homdel","loh","otherloss","nochange","gain","biggain")
+
   for (cna in 1:length(cnas)) {
 
     # reduce table to cnas of a specific type and only the genomic regions where they exist
@@ -65,8 +65,8 @@ GenomewideStackedBar <- function(filestub,segfile_name) {
 
   }
 
-  # write.table(forplot,"/mnt/lustre/users/afrangou/public/results/vis/TISSUE_OAC/c.plots/OACTISSUE_table_for_genomewide_summary.txt",quote=F,sep="\t")
-  write.table(forplot,"/re_gecip/cancer_ovarian/endometrial_current/analyses_v8/battenberg_summary/plots/ENDOMETRIAL_partitioned_regions_all_CNA_types_overlapped_normalised.out",
+  write.table(forplot,paste0(filestub,"_",segfile_name,
+                             "_partitioned_regions_all_CNA_types_overlapped_forplot.out"),
               quote=F,
               sep="\t")
 }
