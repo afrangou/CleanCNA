@@ -25,8 +25,8 @@
 # collate all segments in subclones files across cohort
 GenomewideStackedBar <- function(filestub,segfile_name) {
 
-  all = read.table(filestub,"_",segfile_name,
-                   "_partitioned_regions_all_CNA_types_overlapped.out",
+  all = read.table(paste0(filestub,"_",segfile_name,
+                   "_partitioned_regions_all_CNA_types_overlapped.out"),
                    sep="\t",
                    stringsAsFactors=F)
 
