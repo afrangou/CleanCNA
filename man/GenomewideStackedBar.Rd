@@ -7,6 +7,10 @@ Create stacked bar plot}
 \usage{
 GenomewideStackedBar(filestub, segfile_name)
 }
+\arguments{
+\item{filestub}{= dir (with trailling slash) containing *_partitioned_regions_all_CNA_types_overlapped.out files for all cna types
+segfile_name = label of cohort, eg 'TGCT'}
+}
 \value{
 Prepped data
 Stacked barplot

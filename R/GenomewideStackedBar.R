@@ -15,7 +15,8 @@
 #' homdel, loh, otherloss, nochange, gain, biggain
 #'
 #' @param
-#'
+#' filestub = dir (with trailling slash) containing *_partitioned_regions_all_CNA_types_overlapped.out files for all cna types
+#' segfile_name = label of cohort, eg 'TGCT'
 #'
 #' @return
 #' Prepped data
@@ -25,7 +26,7 @@
 # collate all segments in subclones files across cohort
 GenomewideStackedBar <- function(filestub,segfile_name) {
 
-  all = read.table(paste0(filestub,"_",segfile_name,
+  all = read.table(paste0(filestub,segfile_name,
                    "_partitioned_regions_all_CNA_types_overlapped.out"),
                    sep="\t",
                    stringsAsFactors=F)
