@@ -30,8 +30,8 @@ GenomewideStackedBarPlot <- function(filestub,
   library(ggplot2)
 
   # load file
-  toplot = read.table(paste0(filestub,segfile_name,"_partitioned_regions_all_CNA_types_overlapped.out"),
-                      hea=F,
+  toplot = read.table(paste0(filestub,segfile_name,"_partitioned_regions_all_CNA_types_overlapped_forplot.out"),
+                      hea=T,
                       stringsAsFactors=F,
                       fill=T)
 
@@ -53,8 +53,27 @@ GenomewideStackedBarPlot <- function(filestub,
   lohcol = colours[5]
   homdelcol = colours[4]
 
+  # make totals of nochange, loss, gain, for separate plots
+  toplot$valuenochange = toplot$nochange
+  toplot$valuegain = toplot$nochange + toplot$gain
+  toplot$valuegain2 = toplot$nochange + toplot$gain + toplot$biggain
+  toplot$valueloss = toplot$homdel
+  toplot$valueloss2 = toplot$homdel + toplot$loh
+  toplot$valueloss3 = toplot$homdel + toplot$loh + toplot$otherloss
+
   # change to proportions
   for (column in 4:15) {toplot[,column]=(toplot[,column]/number_samples)*100}
+
+  # order chromosomes numerically
+  toplot$poschr = as.integer(gsub("chr","",toplot$poschr))
+  all = toplot[which(toplot$poschr==1),]
+  for (chr in 2:23) {
+
+    sub = toplot[which(toplot$poschr==chr),]
+    all = rbind(all,sub)
+
+  }
+  toplot=all
 
   # gains plot
   gainstoplot = toplot[,c(1:3,8:9,11:12),]
