@@ -54,7 +54,7 @@ GenomewideStackedBarPlot <- function(filestub,
   homdelcol = colours[4]
 
   # change to proportions
-  for (column in 4:15) {toplot[,column]=(toplot[,column]/numbersamples)*100}
+  for (column in 4:15) {toplot[,column]=(toplot[,column]/number_samples)*100}
 
   # gains plot
   gainstoplot = toplot[,c(1:3,8:9,11:12),]
