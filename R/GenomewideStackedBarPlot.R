@@ -31,7 +31,7 @@ GenomewideStackedBarPlot <- function(filestub,
 
   # load file
   toplot = read.table(paste0(filestub,segfile_name,"_partitioned_regions_all_CNA_types_overlapped.out"),
-                      hea=T,
+                      hea=F,
                       stringsAsFactors=F,
                       fill=T)
 
@@ -54,7 +54,7 @@ GenomewideStackedBarPlot <- function(filestub,
   homdelcol = colours[4]
 
   # change to proportions
-  for (column in 4:15) {toplot[,column]=(toplot[,column]/number_samples)*100}
+  for (column in 4:15) {toplot[,column]=(toplot[,column]/numbersamples)*100}
 
   # gains plot
   gainstoplot = toplot[,c(1:3,8:9,11:12),]
