@@ -55,8 +55,8 @@ GenomewideStackedBarPlot <- function(filestub,
 
   # make totals of nochange, loss, gain, for separate plots
   toplot$valuenochange = toplot$nochange
-  toplot$valuegain = toplot$nochange + toplot$gain
-  toplot$valuegain2 = toplot$nochange + toplot$gain + toplot$biggain
+  toplot$valuegain = toplot$gain
+  toplot$valuegain2 = toplot$gain + toplot$biggain
   toplot$valueloss = toplot$homdel
   toplot$valueloss2 = toplot$homdel + toplot$loh
   toplot$valueloss3 = toplot$homdel + toplot$loh + toplot$otherloss
@@ -77,16 +77,16 @@ GenomewideStackedBarPlot <- function(filestub,
 
   # gains plot
   gainstoplot = toplot[,c(1:3,8:9,11:12),]
-  gainstoplot$value2 = toplot$gain
-  gainstoplot$value3 = toplot$gain + toplot$biggain
+  #gainstoplot$value2 = toplot$gain
+  #gainstoplot$value3 = toplot$gain + toplot$biggain
 
   pdf(paste0(filestub,segfile_name,"_genomewide_stackedbar_gains.pdf"),
       width=10,height=2)
 
     ggplot(gainstoplot) +
       # above x axis
-      geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = value2, fill = gaincol)) +
-      geom_rect(aes(ymin = value2, xmin = posleft, xmax = posright, ymax = value3, fill = biggainpcol)) +
+      geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = valuegain, fill = gaincol)) +
+      geom_rect(aes(ymin = valuegain, xmin = posleft, xmax = posright, ymax = valuegain2, fill = biggainpcol)) +
       # ylabel
       ylab("% tumour samples") +
       # split into chrs
