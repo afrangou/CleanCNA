@@ -57,9 +57,9 @@ GenomewideStackedBarPlot <- function(filestub,
   toplot$valuenochange = toplot$nochange
   toplot$valuegain = toplot$gain
   toplot$valuegain2 = toplot$gain + toplot$biggain
-  toplot$valueloss = toplot$homdel
-  toplot$valueloss2 = toplot$homdel + toplot$loh
-  toplot$valueloss3 = toplot$homdel + toplot$loh + toplot$otherloss
+  toplot$valueloss = toplot$otherloss
+  toplot$valueloss2 = toplot$otherloss + toplot$loh
+  toplot$valueloss3 = toplot$otherloss + toplot$loh + toplot$homdel
 
   # change to proportions
   for (column in 4:15) {toplot[,column]=(toplot[,column]/number_samples)*100}
@@ -77,8 +77,6 @@ GenomewideStackedBarPlot <- function(filestub,
 
   # gains plot
   gainstoplot = toplot[,c(1:3,8:9,11:12),]
-  #gainstoplot$value2 = toplot$gain
-  #gainstoplot$value3 = toplot$gain + toplot$biggain
 
   pdf(paste0(filestub,segfile_name,"_genomewide_stackedbar_gains.pdf"),
       width=10,height=2)
@@ -108,6 +106,79 @@ GenomewideStackedBarPlot <- function(filestub,
                         labels =c("gain","biggain"))
 
   dev.off()
+
+
+  # losses plot
+  lossestoplot = toplot[,c(1:6,13:15),]
+
+  pdf(paste0(filestub,segfile_name,"_genomewide_stackedbar_losses.pdf"),
+      width=10,height=2)
+  ggplot(lossestoplot) +
+
+    # above x axis
+    geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = valueloss, fill = otherlosscol)) +
+    geom_rect(aes(ymin = valueloss, xmin = posleft, xmax = posright, ymax = valueloss2, fill = lohcol)) +
+    geom_rect(aes(ymin = valueloss2, xmin = posleft, xmax = posright, ymax = valueloss3, fill = homdelcol)) +
+    # ylabel
+    ylab("% tumour samples") +
+    # split into chrs
+    facet_grid(~poschr,scales = "free_x",space="free_x") +
+    # remove x axis labels
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank()) +
+    # control y axis scaling
+    coord_cartesian(ylim=c(0,50)) +
+    scale_y_continuous(breaks = c(0, 10, 20, 30, 40,50),
+                       labels = c(0, 10, 20, 30, 40,50)) +
+    #add black line for chr and dot for centromere
+    scale_x_continuous(breaks = NULL) +
+    geom_point(data=centro, aes(x=pos,y=0), size=1.5) +
+    geom_hline(yintercept=0, colour="black", size=0.5) +
+    # add legend
+    scale_fill_manual(values = c(otherlosscol,lohcol,homdelcol),
+                      labels =c("homdel","loh","otherloss"))
+  dev.off()
+
+
+
+  # no change plot
+  nochangetoplot = toplot[,c(1:3,7,10),]
+  nochangetoplot$value = nochangetoplot$nochange
+
+  pdf(paste0(filestub,segfile_name,"_genomewide_stackedbar_nochange.pdf"),
+      width=10,height=2)
+  ggplot(nochangetoplot) +
+    # above x axis
+    geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = valuenochange, fill = nochangecol)) +
+    # geom_rect(aes(ymin = valueneg, xmin = posleft, xmax = posright, ymax = valueneg2, fill = lohcol)) +
+    # geom_rect(aes(ymin = valueneg2, xmin = posleft, xmax = posright, ymax = valueneg3, fill = homdelcol)) +
+    # below x axis
+    # geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = valueneg, fill = otherlosscol)) +
+    # geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = valueneg, fill = lohcol)) +
+    # geom_rect(aes(ymin = valueneg, xmin = posleft, xmax = posright, ymax = valueneg2, fill = homdelcol)) +
+    # ylabel
+    ylab("% tumour samples") +
+    # split into chrs
+    facet_grid(~poschr,scales = "free_x",space="free_x") +
+    # remove x axis labels
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank()) +
+    # control y axis scaling
+    coord_cartesian(ylim=c(0,100)) +
+    scale_y_continuous(breaks = c(0, 50,100),
+                       labels = c(0, 50,100)) +
+    #add black line for chr and dot for centromere
+    scale_x_continuous(breaks = NULL) +
+    geom_point(data=centro, aes(x=pos,y=0), size=1.5) +
+    geom_hline(yintercept=0, colour="black", size=0.5) +
+    # add legend
+    scale_fill_manual(values = nochangecol,
+                      labels ="no change")
+
+  dev.off()
+
 
 }
 
