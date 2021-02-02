@@ -24,11 +24,11 @@ LabelGenomecov <- function(filestub,segfile_name) {
   # label each of these files with the copy number type
   cnas = c("homdel","loh","otherloss","nochange","gain","biggain")
   for (i in 1:length(cnas)) {
-    file = read.table(paste0(filestub,segfile_name,"_",cnas[i],"_regions_normalised.out"),
+    file = read.table(paste0(filestub,segfile_name,"_",cnas[i],"_regions.out"),
                       sep="\t",
                       stringsAsFactors=F)
     file = cbind(file,cnas[i])
-    write.table(file,paste0(filestub,segfile_name,"_",cnas[i],"_regions_normalised.out"),
+    write.table(file,paste0(filestub,segfile_name,"_",cnas[i],"_regions.out"),
                 sep="\t",
                 col.names=F,
                 row.names=F,
