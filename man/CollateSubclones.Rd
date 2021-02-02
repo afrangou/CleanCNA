@@ -12,7 +12,7 @@ segfile_dir = where segfile will go
 segfile_name = cohort name}
 }
 \value{
-A table for use with bedtools etc
+A table with all segments from all subclones files collated
 }
 \description{
 Prepares subclones info to label copy number of segments
