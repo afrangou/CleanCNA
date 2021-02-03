@@ -30,7 +30,7 @@ GenomewideStackedBarPlot <- function(filestub,
   library(ggplot2)
 
   # load file
-  toplot = read.table(paste0(filestub,segfile_name,"_partitioned_regions_all_CNA_types_overlapped.out"),
+  toplot = read.table(paste0(filestub,segfile_name,"_partitioned_regions_all_CNA_types_overlapped_forplot.out"),
                       hea=T,
                       stringsAsFactors=F,
                       fill=T)
