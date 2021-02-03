@@ -59,7 +59,7 @@ GenomewideStackedBar <- function(filestub,segfile_name) {
     test = match(rownames(forplot),allcna$pos)
     forplot_rows = which(!is.na(test))
     allcna_rows = test[-which(is.na(test))]
-    forplot[forplot_rows,cnas[cna]] = allcna[cna_rows,8]
+    forplot[forplot_rows,cnas[cna]] = allcna[allcna_rows,8]
 
     #     for (i in 1:nrow(allcna)) {
     #   row = which(rownames(forplot)==allcna$pos[i])
