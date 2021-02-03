@@ -113,6 +113,7 @@ CNAsDriversHeatmapDendrogram <- function(segfile_dir,
       sub = subs[subs$sample==samples[i],]
       for (g in 1:nrow(genes)) {
         chr = sub[sub$chr==genes$positions_chr[g],]
+        if (nrow(chr)==0){next}
         row = which((chr$startpos <= genes$positions_start[g]) & (chr$endpos >= genes$positions_end[g]))
         if (length(row)==0) {
           minrows = max(which(chr$startpos <= genes$positions_start[g]))
