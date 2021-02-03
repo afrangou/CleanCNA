@@ -71,7 +71,7 @@ GenomewideStackedBar <- function(filestub,segfile_name) {
 
   }
 
-  write.table(forplot,paste0(filestub,"_",segfile_name,
+  write.table(forplot,paste0(filestub,segfile_name,
                              "_partitioned_regions_all_CNA_types_overlapped_forplot.out"),
               quote=F,
               sep="\t")
