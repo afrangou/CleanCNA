@@ -56,13 +56,18 @@ GenomewideStackedBar <- function(filestub,segfile_name) {
     allcna = all[which(all[,9]==cnas[cna] & all[,8]!=0),]
 
     # find these regions in the forplot table and fill in for current cna type
-    for (i in 1:nrow(allcna)) {
-      row = which(rownames(forplot)==allcna$pos[i])
-      if (length(row)>0) {
-        forplot[row,cnas[cna]] = allcna[i,8]
-      }
+    test = match(rownames(forplot,allcna$pos))
+    forplot_rows = which(!is.na(test))
+    allcna_rows = test[-which(is.na(test))]
+    forplot[forplot_rows,cnas[cna]] = allcna[cna_rows,8]
 
-    }
+    #     for (i in 1:nrow(allcna)) {
+    #   row = which(rownames(forplot)==allcna$pos[i])
+    #   if (length(row)>0) {
+    #     forplot[row,cnas[cna]] = allcna[i,8]
+    #   }
+    #
+    # }
 
   }
 
