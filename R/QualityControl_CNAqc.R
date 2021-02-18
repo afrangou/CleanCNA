@@ -426,7 +426,7 @@ qc_CNAqc <- function(
     }
                                                
     # if homdels are too large, use dpclust parameters not vafpeaks parameters
-    if (qc[id, pasteu(run.name, "_lgenome_homodelall")] >= 100000000) {
+    if (qc[id, pasteu(run.name, "_lsegs_homodelall")] >= 100000000) {
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
     }
