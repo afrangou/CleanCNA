@@ -322,13 +322,18 @@ qc_CNAqc <- function(
                                                            sum(dpclust[[id]]$no.of.mutations[dpclust[[id]]$location > thres.clonalpeak.upper.wide &
                                                                                                dpclust[[id]]$no.of.mutations > qc[id, pasteu(run.name, "fivepc_cluster_size")]]))
 
+                                               
     # uses VAF peak data calculated in previous step (peaks)
-    load(filenames.peaks[id])
+    load(filenames.peaks[id])                                      
     #expected.locs <- peaks$summary$expected.locs
     expected.locs <- peaks$peaks_analysis$matches
     if (is.null(nrow(expected.locs))) {
       # if there are no matched peaks then 2:2 peak matching does not occur
-      qc[id, pasteu(run.name, "vafpeaks_tetraploid")] <- FALSE
+      if (peaks$peaks_analysis$QC=="FLAG") {
+        qc[id, pasteu(run.name, "vafpeaks_tetraploid")] <- TRUE  
+      } else {
+        qc[id, pasteu(run.name, "vafpeaks_tetraploid")] <- FALSE
+      }
     } else {
       # select peaks to consider and determine whether they are within the threshold and purity distance off
       #expected.locs <- expected.locs[order(abs(expected.locs$peak.diff)), ]
