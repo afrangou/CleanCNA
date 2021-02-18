@@ -400,8 +400,8 @@ qc_CNAqc <- function(
     # select reestimated purity/ploidy (these are only used if sample fails with filters)
     # if sample's ploidy is deemed wrong, make these the new parameters
     # if not, use vafpeaks params, unless it doesn't exist, in which case use DPClust params
-    # if it's the last run (4), use DPClust params, unless the sample has switched ploidy twice, in which case use VAFPeaks
-
+    # if it's the last run (4), use DPClust params, unless the sample has switched ploidy twice, in which case use VAFPeaks                                        
+                                               
     # if ploidy type fails, run with new ploidy params
     if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="FAIL") {
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "newploidy_purity")]
@@ -421,6 +421,12 @@ qc_CNAqc <- function(
     # if ploidy passes, and we're on the last run, overwrite vafpeaks params with dpclust params
     # if ploidy has failed, it reruns with new ploidy as above (this could flipflop)
     if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" & run.name=="run3") {
+      qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
+      qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
+    }
+                                               
+    # if homdels are too large, use dpclust parameters not vafpeaks parameters
+    if (qc[id, pasteu(run.name, "_fgenome_homodelall")] >= 100000000) {
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
     }
