@@ -389,7 +389,7 @@ qc_CNAqc <- function(
                                                                  qc[id, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest |
                                                                  qc[id, pasteu(run.name, "nclonalpeaks")] == 0 |
                                                                  qc[id, pasteu(run.name, "nsuperclonalpeaks")] != 0 |
-                                                                 is.na(qc[id, pasteu(run.name, "vafpeaks_score")]) |
+                                                                 #is.na(qc[id, pasteu(run.name, "vafpeaks_score")]) | # flagging this as unassessable instead of failing it through insufficient mutations.
                                                                  qc[id, pasteu(run.name, "vafpeaks_score")] > thres.purity.diff,"FAIL","PASS")
 
     # select reestimated purity/ploidy (these are only used if sample fails with filters)
@@ -436,7 +436,7 @@ qc_CNAqc <- function(
   # there must be no superclonal peaks that are of a size larger than the threshold in the qc config file
   filters$superclonalpeaks <- ifelse(qc[ids, pasteu(run.name, "nsuperclonalpeaks")] != 0, "FAIL", "PASS")
 
-  # vafpeaks filter must have passed or be FLAG (not enough mutations to assess so we only use other metrics to assess the call)
+  # vafpeaks filter must have passed or be FLAG in order for the sample to pass (ie if not enough mutations to assess, we only use other metrics to assess the call)
   filters$vafpeaks <- ifelse(peaks$peaks_analysis$QC=="FAIL", "FAIL", "PASS")                                            
 
   # the ploidy call must be deemed correct, so if diploid, must have a ploidy classified as diploid through PCAWG eqn, and
