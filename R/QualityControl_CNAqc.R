@@ -436,8 +436,8 @@ qc_CNAqc <- function(
   # there must be no superclonal peaks that are of a size larger than the threshold in the qc config file
   filters$superclonalpeaks <- ifelse(qc[ids, pasteu(run.name, "nsuperclonalpeaks")] != 0, "FAIL", "PASS")
 
-  # vafpeaks filter must have passed
-  filters$vafpeaks <- ifelse(peaks$peaks_analysis$QC=="FAIL", "FAIL", "PASS")
+  # vafpeaks filter must have passed or be FLAG (not enough mutations to assess so we only use other metrics to assess the call)
+  filters$vafpeaks <- ifelse(peaks$peaks_analysis$QC=="FAIL", "FAIL", "PASS")                                            
 
   # the ploidy call must be deemed correct, so if diploid, must have a ploidy classified as diploid through PCAWG eqn, and
   # can have no more than qc.config threshold of the genome between 0.5 boundary (if narrow sample (same boundary), or
@@ -453,7 +453,7 @@ qc_CNAqc <- function(
                                          filters$homodeletions=="PASS" &
                                          filters$noclonalpeak=="PASS" &
                                          filters$superclonalpeaks=="PASS" &
-                                         filters$vafpeaks=="PASS","PASS","FAIL")
+                                         (filters$vafpeaks=="PASS" | filters$vafpeaks=="FLAG"),"PASS","FAIL")
 
   # classify the sample as having passed or failed
   filters <- data.frame(filters, stringsAsFactors=F)
