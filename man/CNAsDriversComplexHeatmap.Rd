@@ -12,6 +12,7 @@ CNAsDriversComplexHeatmap(segfile_dir, segfile_name, plot_name, tomelt)
 \item{segfile_dir}{= dir with all *_subclones.txt files are
 segfile_name = label of cohort, eg 'TGCT'
 plot_name = name for plot
+tomelt = from CNAsDriversHeatmap function
 driver_file = tab sep file, colnames SYMBOL (of gene) and TIER (1,2,etc) existing}
 }
 \value{
@@ -21,4 +22,5 @@ Heatmap, dendrogram of CNAs v drivers, with classifying bars
 Create heatmap showing CNA status at driver genes using complexheatmap
 homdel, loh, otherloss, nochange, gain, biggain
 with various bars down the side
+for bars down side, feed vectors to function
 }
