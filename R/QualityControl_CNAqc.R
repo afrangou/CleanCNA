@@ -154,7 +154,7 @@ qc_CNAqc <- function(
 
   # add purity and ploidy estimates from BB (cellularity file) and dpclust (optimaInfo)
   log.message("add purity and ploidy estimates")
-  qc[ids, pasteu(run.name, "battenberg_purity")] <- battenberg.purity[ids, "cellularity"]
+  qc[ids, pasteu(run.name, "battenberg_purity")] <- battenberg.purity[ids, ifelse("cellularity" %in% colnames(battenberg.purity),'cellularity','purity')] 
   qc[ids, pasteu(run.name, "battenberg_ploidy")] <- battenberg.purity[ids, "psi"]
   qc[ids, pasteu(run.name, "dpclust_purity")] <- sapply(ids, function(id) estimate.dpclust.purity(dpclust[[id]], qc[id, pasteu(run.name, "battenberg_purity")]))
   qc[ids, pasteu(run.name, "dpclust_ploidy")] <- sapply(ids, function(id) estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")], qc[id, pasteu(run.name, "battenberg_ploidy")], qc[id, pasteu(run.name, "dpclust_purity")]))
@@ -361,6 +361,8 @@ qc_CNAqc <- function(
                                                                          qc[id, pasteu(run.name, "vafpeaks_purity")])
       #qc[id, pasteu(run.name, "vafpeaks_score")] <- peaks$summary$eta
       qc[id, pasteu(run.name, "vafpeaks_score")] <-peaks$peaks_analysis$score
+      # add in peaks$peaks_analysis$QC to qc table
+      qc[id, pasteu(run.name, "vafpeaks")] <-peaks$peaks_analysis$QC
     }
 
 
