@@ -118,6 +118,8 @@ CNAsDriversHeatmapDendrogram <- function(segfile_dir,
         if (length(row)==0) {
           minrows = max(which(chr$startpos <= genes$positions_start[g]))
           maxrows = min(which(chr$endpos >= genes$positions_end[g]))
+          if (minrows == -Inf & nrow(chr)==1) {minrows=1}
+          if (maxrows == Inf & nrow(chr)==1) {maxrows=1}
           rows = minrows:maxrows
           longestregion = which(chr[rows,3]-chr[rows,2] == max(chr[rows,3]-chr[rows,2]))
           row = rows[longestregion]

@@ -6,12 +6,12 @@
 Dendrogram automatically goes alongside
 Bars classifying samples in lots of ways produced alongside heatmap}
 \usage{
-CNAsDriversComplexHeatmap(segfile_dir, segfile_name, bed_file, driver_file)
+CNAsDriversComplexHeatmap(segfile_dir, segfile_name, plot_name, tomelt)
 }
 \arguments{
 \item{segfile_dir}{= dir with all *_subclones.txt files are
 segfile_name = label of cohort, eg 'TGCT'
-bed_file = tab sep file, 7 cols, chr,start,end,strand,ens,ens,genename
+plot_name = name for plot
 driver_file = tab sep file, colnames SYMBOL (of gene) and TIER (1,2,etc) existing}
 }
 \value{
@@ -20,4 +20,5 @@ Heatmap, dendrogram of CNAs v drivers, with classifying bars
 \description{
 Create heatmap showing CNA status at driver genes using complexheatmap
 homdel, loh, otherloss, nochange, gain, biggain
+with various bars down the side
 }
