@@ -84,7 +84,7 @@ GenomewideStackedBarPlotGains <- function(filestub,
   # pdf(paste0(filestub,segfile_name,"_genomewide_stackedbar_gains.pdf"),
   #     width=10,height=2)
 
-  ggplot(gainstoplot) +
+  gains <- ggplot(gainstoplot) +
     # above x axis
     geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = valuegain, fill = gaincol)) +
     geom_rect(aes(ymin = valuegain, xmin = posleft, xmax = posright, ymax = valuegain2, fill = biggainpcol)) +
@@ -107,6 +107,8 @@ GenomewideStackedBarPlotGains <- function(filestub,
     # add legend
     scale_fill_manual(values = c(gaincol,biggainpcol),
                       labels =c("gain","biggain"))
+
+  print(gains)
 
   dev.off()
 
