@@ -78,8 +78,11 @@ GenomewideStackedBarPlotGains <- function(filestub,
   # gains plot
   gainstoplot = toplot[,c(1:3,8:9,11:12),]
 
-  pdf(paste0(filestub,segfile_name,"_genomewide_stackedbar_gains.pdf"),
-      width=10,height=2)
+  Cairo:::CairoPDF(paste0(filestub,segfile_name,"_genomewide_stackedbar_gains.pdf"),
+                   width = 10,
+                   height=2)
+  # pdf(paste0(filestub,segfile_name,"_genomewide_stackedbar_gains.pdf"),
+  #     width=10,height=2)
 
   ggplot(gainstoplot) +
     # above x axis
