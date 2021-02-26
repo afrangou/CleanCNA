@@ -20,7 +20,8 @@
 #' segfile_dir = dir with all *_subclones.txt files are
 #' segfile_name = label of cohort, eg 'TGCT'
 #' plot_name = name for plot
-#' tomelt = from CNAsDriversHeatmap function
+#' tomelt = saved from CNAsDriversHeatmap function
+#' bed_file =
 #' driver_file = tab sep file, colnames SYMBOL (of gene) and TIER (1,2,etc) existing
 #'
 #' @return
@@ -30,7 +31,39 @@
 CNAsDriversComplexHeatmap <- function(segfile_dir,
                              segfile_name,
                              plot_name,
+                             bed_file,
+                             driver_file,
                              tomelt) {
+
+  library(ComplexHeatmap)
+
+  bed = read.table(bed_file, stringsAsFactors = F)
+  dri = read.table(driver_file, hea = T, stringsAsFactors = F,
+                   fill = T)
+
+  dri = dri[which(dri$TIER == 1 | dri$TIER == 2), ]
+  bed = bed[match(dri$SYMBOL, bed[, 7]), ]
+  bed = cbind(bed,dri$TIER)
+  positions_chr = as.character(bed[, 1])
+  positions_chr = as.character(gsub("chr", "", positions_chr))
+  positions_start = as.character(bed[, 2])
+  positions_end = as.character(bed[, 3])
+  positions_gene = as.character(bed[, 7])
+  genes = as.data.frame(cbind(positions_gene, positions_chr,
+                              positions_start, positions_end))
+  genes$tier =
+    for (i in 1:ncol(genes)) {
+      genes[, i] = as.character(genes[, i])
+    }
+  genes$positions_chr[which(genes$positions_chr == "X")] = "23"
+  tomelt <- as.matrix(read.csv(paste0(segfile_dir, segfile_name,
+                                      "_dendrogram.csv"), stringsAsFactors = F, sep = " "))
+  samples = rownames(tomelt)
+  rownames(tomelt)=NULL
+  tumour_platekeys = sapply(samples, function(x) {
+    strsplit(samples, "\\.")[[1]][2]
+  })
+
 
   Cairo:::CairoPDF(paste0(segfile_dir,segfile_name,"_",plot_name),width = 10,height=6)
   Heatmap(tomelt,name="CN",
