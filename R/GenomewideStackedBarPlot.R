@@ -81,7 +81,7 @@ GenomewideStackedBarPlot <- function(filestub,
   pdf(paste0(filestub,segfile_name,"_genomewide_stackedbar_gains.pdf"),
       width=10,height=2)
 
-    ggplot(gainstoplot) +
+    gains <- ggplot(gainstoplot) +
       # above x axis
       geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = valuegain, fill = gaincol)) +
       geom_rect(aes(ymin = valuegain, xmin = posleft, xmax = posright, ymax = valuegain2, fill = biggainpcol)) +
@@ -105,6 +105,7 @@ GenomewideStackedBarPlot <- function(filestub,
       scale_fill_manual(values = c(gaincol,biggainpcol),
                         labels =c("gain","biggain"))
 
+  print(gains)
   dev.off()
 
 
@@ -113,7 +114,7 @@ GenomewideStackedBarPlot <- function(filestub,
 
   pdf(paste0(filestub,segfile_name,"_genomewide_stackedbar_losses.pdf"),
       width=10,height=2)
-  ggplot(lossestoplot) +
+  losses <- ggplot(lossestoplot) +
 
     # above x axis
     geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = valueloss, fill = otherlosscol)) +
@@ -138,6 +139,7 @@ GenomewideStackedBarPlot <- function(filestub,
     # add legend
     scale_fill_manual(values = c(otherlosscol,lohcol,homdelcol),
                       labels =c("homdel","loh","otherloss"))
+  print(losses)
   dev.off()
 
 
@@ -148,7 +150,7 @@ GenomewideStackedBarPlot <- function(filestub,
 
   pdf(paste0(filestub,segfile_name,"_genomewide_stackedbar_nochange.pdf"),
       width=10,height=2)
-  ggplot(nochangetoplot) +
+  nochange <- ggplot(nochangetoplot) +
     # above x axis
     geom_rect(aes(ymin = 0, xmin = posleft, xmax = posright, ymax = valuenochange, fill = nochangecol)) +
     # geom_rect(aes(ymin = valueneg, xmin = posleft, xmax = posright, ymax = valueneg2, fill = lohcol)) +
@@ -177,6 +179,7 @@ GenomewideStackedBarPlot <- function(filestub,
     scale_fill_manual(values = nochangecol,
                       labels ="no change")
 
+  print(nochange)
   dev.off()
 
 
