@@ -33,7 +33,7 @@ CleanBedopsOutput <- function(filestub,
   bedops[,4] = paste(bedops[,1],bedops[,2],bedops[,3],sep="_")
   for (i in 1:3) {bedops[,i]=as.integer(bedops[,i])}
   toremove = which(duplicated(bedops))
-  bedops = bedops[-toremove,]
+  if (length(toremove)>0) {bedops = bedops[-toremove,]}
   lastrows = c()
   for (chr in 1:23) {
     thischr = bedops[which(bedops[,1]==chr),]
