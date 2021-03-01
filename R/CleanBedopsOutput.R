@@ -46,8 +46,8 @@ CleanBedopsOutput <- function(filestub,
       lastrows[chr] =0
     }
   }
-  lastrows = lastrows[-which(lastrows==0)]
-  bedops = bedops[-lastrows,]
+  if (length(which(lastrows==0))>0) {lastrows = lastrows[-which(lastrows==0)]}
+  if (length(lastrows)>0) {bedops = bedops[-lastrows,]}
   bedops = bedops[order(bedops[,1],bedops[,2],bedops[,3]),]
   bedops[,1]=paste("chr",bedops[,1],sep="")
   write.table(bedops[,1:3],
