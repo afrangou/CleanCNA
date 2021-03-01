@@ -327,6 +327,7 @@ qc_CNAqc <- function(
     load(filenames.peaks[id])                                      
     #expected.locs <- peaks$summary$expected.locs
     expected.locs <- peaks$peaks_analysis$matches
+    qc[id, pasteu(run.name, "vafpeaks")] <-peaks$peaks_analysis$QC                                          
     if (is.null(nrow(expected.locs))) {
       # if there are no matched peaks then 2:2 peak matching does not occur
       if (peaks$peaks_analysis$QC=="FLAG") {
@@ -362,7 +363,7 @@ qc_CNAqc <- function(
       #qc[id, pasteu(run.name, "vafpeaks_score")] <- peaks$summary$eta
       qc[id, pasteu(run.name, "vafpeaks_score")] <-peaks$peaks_analysis$score
       # add in peaks$peaks_analysis$QC to qc table
-      qc[id, pasteu(run.name, "vafpeaks")] <-peaks$peaks_analysis$QC
+      #qc[id, pasteu(run.name, "vafpeaks")] <-peaks$peaks_analysis$QC
     }
 
 
