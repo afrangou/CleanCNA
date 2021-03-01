@@ -140,7 +140,8 @@ CNAsDriversHeatmapDendrogram <- function(segfile_dir,
     for (i in 1:ncol(tomelt)) {tomelt[,i]=as.numeric(tomelt[,i])}
     write.table(tomelt,paste0(segfile_dir,segfile_name,"_dendrogram.csv"),
                               quote=F)
-    # write melted table for heatmap
+
+    # # write melted table for heatmap (old)
     melted = melt(tomelt)
     colnames(melted) = c("tumour", "driver","normalised_total_cn")
     write.table(melted,paste0(segfile_dir,segfile_name,"_heatmap.csv"),
@@ -148,53 +149,53 @@ CNAsDriversHeatmapDendrogram <- function(segfile_dir,
                 quote=F)
 
 
-    # make dendrogram
-    library(dendextend)
-    todend <- as.data.frame(tomelt)
-    for (i in 1:ncol(todend)) {todend[,i]=as.numeric(todend[,i])}
-    todend.scaled <- scale(todend)
-    # hierarchical clustering
-    todend.scaled.clustered <- hclust(dist(todend.scaled))
-    # make dendrogram
-    todend.dend <-as.dendrogram(todend.scaled.clustered)
-    # plot
-    dendplot <- ggdendrogram(data = todend.dend, rotate=T,axis.text.y = element_text(size = 1))
-    pdf(paste0(segfile_dir,segfile_name,"_dendrogram.pdf"))
-      dendplot
-    dev.off()
-
-    # get order for heatmap from dendrogram
-    heatmap.order = order.dendrogram(todend.dend)
-
-    # make heatmap
-    toplot = read.csv(paste0(segfile_dir,segfile_name,"_heatmap.csv"),
-                      stringsAsFactors=F,
-                      sep=" ")
-
-    toplot$normalised_total_cn = as.factor(toplot$normalised_total_cn)
-    # label genes with a factor based on order in genome so plots correctly
-    toplot$order = as.character(sort(rep(1:length(unique(toplot$driver)),length(unique(toplot$tumour)))))
-    toplot$driver <- factor(toplot$driver, levels=unique(toplot$driver)[order(toplot$order)])
-    # label tumours with a factor based on order of dendrogram so plots correctly
-    toplot = cbind(toplot,order2=rep(1:length(unique(toplot$tumour)),length(unique(toplot$driver))))
-    toplot = cbind(toplot,use=match(toplot$order2,heatmap.order))
-    toplot = toplot[order(as.integer(toplot$order),toplot$use),]
-    toplot$tumour <- factor(toplot$tumour, levels = unique(toplot$tumour)[order(as.numeric(toplot$use))])
-
-    plot1 <- ggplot(toplot,aes(driver, tumour, fill = normalised_total_cn)) +
-      geom_tile(size = 0.2) +#, color = "white") +
-      theme(text = element_text(size=8),
-            axis.title.x = element_blank(),
-            axis.title.y=element_blank(),
-            axis.text.y = element_blank(),
-            axis.ticks.y = element_blank(),
-            axis.text.x = element_text(angle = 80, vjust = 0.5),
-            panel.border = element_blank()) +
-      scale_fill_manual(values=c("black","deepskyblue4","deepskyblue2", "darkolivegreen2", "deeppink","deeppink4")) +
-      theme(legend.position = "left")
-
-    pdf(paste0(segfile_dir,segfile_name,"_heatmap.pdf"))
-      plot1
-    dev.off()
+    # # make dendrogram
+    # library(dendextend)
+    # todend <- as.data.frame(tomelt)
+    # for (i in 1:ncol(todend)) {todend[,i]=as.numeric(todend[,i])}
+    # todend.scaled <- scale(todend)
+    # # hierarchical clustering
+    # todend.scaled.clustered <- hclust(dist(todend.scaled))
+    # # make dendrogram
+    # todend.dend <-as.dendrogram(todend.scaled.clustered)
+    # # plot
+    # dendplot <- ggdendrogram(data = todend.dend, rotate=T,axis.text.y = element_text(size = 1))
+    # pdf(paste0(segfile_dir,segfile_name,"_dendrogram.pdf"))
+    #   dendplot
+    # dev.off()
+    #
+    # # get order for heatmap from dendrogram
+    # heatmap.order = order.dendrogram(todend.dend)
+    #
+    # # make heatmap
+    # toplot = read.csv(paste0(segfile_dir,segfile_name,"_heatmap.csv"),
+    #                   stringsAsFactors=F,
+    #                   sep=" ")
+    #
+    # toplot$normalised_total_cn = as.factor(toplot$normalised_total_cn)
+    # # label genes with a factor based on order in genome so plots correctly
+    # toplot$order = as.character(sort(rep(1:length(unique(toplot$driver)),length(unique(toplot$tumour)))))
+    # toplot$driver <- factor(toplot$driver, levels=unique(toplot$driver)[order(toplot$order)])
+    # # label tumours with a factor based on order of dendrogram so plots correctly
+    # toplot = cbind(toplot,order2=rep(1:length(unique(toplot$tumour)),length(unique(toplot$driver))))
+    # toplot = cbind(toplot,use=match(toplot$order2,heatmap.order))
+    # toplot = toplot[order(as.integer(toplot$order),toplot$use),]
+    # toplot$tumour <- factor(toplot$tumour, levels = unique(toplot$tumour)[order(as.numeric(toplot$use))])
+    #
+    # plot1 <- ggplot(toplot,aes(driver, tumour, fill = normalised_total_cn)) +
+    #   geom_tile(size = 0.2) +#, color = "white") +
+    #   theme(text = element_text(size=8),
+    #         axis.title.x = element_blank(),
+    #         axis.title.y=element_blank(),
+    #         axis.text.y = element_blank(),
+    #         axis.ticks.y = element_blank(),
+    #         axis.text.x = element_text(angle = 80, vjust = 0.5),
+    #         panel.border = element_blank()) +
+    #   scale_fill_manual(values=c("black","deepskyblue4","deepskyblue2", "darkolivegreen2", "deeppink","deeppink4")) +
+    #   theme(legend.position = "left")
+    #
+    # pdf(paste0(segfile_dir,segfile_name,"_heatmap.pdf"))
+    #   plot1
+    # dev.off()
 
 }
