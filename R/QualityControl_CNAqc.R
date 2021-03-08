@@ -398,7 +398,7 @@ qc_CNAqc <- function(
                                                                  qc[id, pasteu(run.name, "nclonalpeaks")] == 0 |
                                                                  qc[id, pasteu(run.name, "nsuperclonalpeaks")] != 0 |
                                                                  #is.na(qc[id, pasteu(run.name, "vafpeaks_score")]) | # flagging this as unassessable instead of failing it through insufficient mutations.
-                                                                 qc[id, pasteu(run.name, "vafpeaks_score")] > thres.purity.diff,"FAIL","PASS")
+                                                                 abs(qc[id, pasteu(run.name, "vafpeaks_score")]) > thres.purity.diff,"FAIL","PASS")
 
     # select reestimated purity/ploidy (these are only used if sample fails with filters)
     # if sample's ploidy is deemed wrong, make these the new parameters
