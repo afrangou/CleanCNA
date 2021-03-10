@@ -13,22 +13,22 @@ log.message <- function(x, level=0) message(paste0("[", Sys.time(), "] ", paste(
 
 # estimate.new.ploidy <- function(rho.old, psi.old, rho.new) (rho.old * (psi.old - 2) + 2 * rho.new) / rho.new # from eq. S5, Van Loo et al. (PNAS, 2010)
 
-estimate.new.ploidy <- function(rho.old, psi.old, rho.new) {
-  if (psi.old == "tetra") {ploidytype = "tetra"} else {ploidytype = "dip"}
+estimate.new.ploidy <- function(rho.old, psi.old, rho.new, dip.or.tetra) {
+  if (dip.or.tetra == "tetra") {ploidytype = "tetra"} else {ploidytype = "dip"}
   if (ploidytype=="dip") {psi.new = ((rho.old * psi.old) + 2*(rho.new - rho.old)) / rho.new}
   if (ploidytype=="tetra") {psi.new = ((rho.old * psi.old) + 4*(rho.new - rho.old)) / rho.new}
   return(psi.new)
 }
 
-switch.ploidy.get.purity <- function(rho.old,psi.old) {
-  if (psi.old == "tetra") {ploidytype = "tetra"} else {ploidytype = "dip"}
+switch.ploidy.get.purity <- function(rho.old,psi.old,dip.or.tetra) {
+  if (dip.or.tetra == "tetra") {ploidytype = "tetra"} else {ploidytype = "dip"}
   if (ploidytype == "tetra") {rho.new = 2*rho.old / (rho.old+1)}
   if (ploidytype == "dip")  {rho.new = rho.old / (2-rho.old)}
   return(rho.new)
 }
 
-switch.ploidy.get.ploidy <- function(rho.old,psi.old) {
-  if (psi.old == "tetra") {ploidytype = "tetra"} else {ploidytype = "dip"}
+switch.ploidy.get.ploidy <- function(rho.old,psi.old,dip.or.tetra) {
+  if (dip.or.tetra == "tetra") {ploidytype = "tetra"} else {ploidytype = "dip"}
   if (ploidytype == "tetra") {psi.new = psi.old/2}
   if (ploidytype == "dip")  {psi.new = psi.old*2}
   return(psi.new)
@@ -359,7 +359,8 @@ qc_CNAqc <- function(
       if (qc[id, pasteu(run.name, "vafpeaks_purity")]>0.95) {qc[id, pasteu(run.name, "vafpeaks_purity")]=0.95}
       qc[id, pasteu(run.name, "vafpeaks_ploidy")] <- estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")],
                                                                          qc[id, pasteu(run.name, "battenberg_ploidy")],
-                                                                         qc[id, pasteu(run.name, "vafpeaks_purity")])
+                                                                         qc[id, pasteu(run.name, "vafpeaks_purity")],
+                                                                        qc[id, pasteu(run.name, "dip.or.tetra")])
       #qc[id, pasteu(run.name, "vafpeaks_score")] <- peaks$summary$eta
       qc[id, pasteu(run.name, "vafpeaks_score")] <-peaks$peaks_analysis$score
       # add in peaks$peaks_analysis$QC to qc table
@@ -385,11 +386,13 @@ qc_CNAqc <- function(
 
     # calculate the new ploidy and purity for IF the ploidy is deemed incorrect - not necessarily used
     qc[id, pasteu(run.name, "newploidy_purity")] <- switch.ploidy.get.purity(qc[id, pasteu(run.name,"battenberg_purity")],
-                                                                             qc[id, pasteu(run.name,"battenberg_ploidy")])
+                                                                             qc[id, pasteu(run.name,"battenberg_ploidy")],
+                                                                            qc[id, pasteu(run.name,"dip.or.tetra")])
 
 
     qc[id, pasteu(run.name, "newploidy_ploidy")] <- switch.ploidy.get.ploidy(qc[id, pasteu(run.name,"battenberg_purity")],
-                                                                             qc[id, pasteu(run.name,"battenberg_ploidy")])
+                                                                             qc[id, pasteu(run.name,"battenberg_ploidy")],
+                                                                            qc[id, pasteu(run.name,"dip.or.tetra")]))
 
     # add pass or fail for basic filters
     qc[id, pasteu(run.name, "basic_filters_passed")] <- ifelse(qc[id, pasteu(run.name, "n_chrmissing")] != 0 |
