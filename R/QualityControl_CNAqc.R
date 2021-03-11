@@ -149,7 +149,8 @@ qc_CNAqc <- function(
 
   # if not the first run, filter down to only deal with samples that failed previous runs
   if (sum(grepl(paste0(run.name, "_"), colnames(qc)))) warning("columns already found for run ", run)
-  if (run > 1) ids <- ids[which(qc[ids, pasteu(paste0("run", run - 1), "filter_overallfilter")] == "FAIL")] # identify samples not passing previous run
+  if (run > 1) ids <- ids[which(qc[ids, pasteu(paste0("run", run - 1), "filter_overallfilter")] == "FAIL" | 
+                               qc[ids, pasteu(paste0("run", run - 1), "filter_overallfilter")] == "FLAG")] # identify samples not passing previous run
   if (length(ids) == 0) stop("no tumour-normal pairs to QC")
 
   # add purity and ploidy estimates from BB (cellularity file) and dpclust (optimaInfo) - dpclust ploidy reestimation comes later because we need dip/tetra classification first 
@@ -495,8 +496,34 @@ qc_CNAqc <- function(
   #                                       (filters$vafpeaks=="PASS" | filters$vafpeaks=="FLAG"),"PASS","FAIL")
   
   # classify the sample as having passed, failed, or is flagged
+   # classify the sample as having passed, failed, or is flagged
   filters <- data.frame(filters, stringsAsFactors=F)
-  filters$overallfilter <- apply(filters, 1, get.worst.filter)
+                                               
+  # if any fail or flag exists at all, set that sample to rerun
+  filters$worstfilter <- apply(filters, 1, get.worst.filter)
+
+  # but now overwrite those samples in these special cases that we don't want to rerun
+  # at this point they are marked with a flag or fail overall if any criteria has a flag or a fail 
+  # vafpeaks flag/fail but everything else is ok, we don't rerun 
+  filters$vafonly = (filters$vafpeaks == "FLAG" | filters$vafpeaks == "FAIL") &
+        filters$chrmissing == "PASS" &
+        (filters$chrsizewrong == "PASS" | filters$chrsizewrong == "FLAG") &
+        filters$homodeletions == "PASS" &
+        filters$ploidytype == "PASS" &
+        filters$noclonalpeak == "PASS" &
+        filters$superclonalpeaks == "PASS"
+  # chr length flagged but everything else is ok, we don't rerun
+  filters$chrsizeonly = (filters$vafpeaks == "FLAG" | filters$vafpeaks == "PASS") &
+        filters$chrmissing == "PASS" &
+        filters$chrsizewrong == "FLAG" &
+        filters$homodeletions == "PASS" &
+        filters$ploidytype == "PASS" &
+        filters$noclonalpeak == "PASS" &
+        filters$superclonalpeaks == "PASS"
+  # set these samples as PASS                                             
+  filters$worstfilter[which(filters$vafonly == T | filters$chrsizeonly == T)] = "PASS"
+  
+                                               
   filters.qc <- filters
   dimnames(filters.qc) <- list(ids, pasteu(run.name, "filter", colnames(filters.qc)))
   qc <- data.frame(qc, filters.qc[rownames(qc), ])
