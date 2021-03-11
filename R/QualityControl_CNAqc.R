@@ -424,7 +424,7 @@ qc_CNAqc <- function(
     # if it's the last run (4), use DPClust params, unless the sample has switched ploidy twice, in which case use VAFPeaks                                        
                                                
     # if ploidy type fails, run with new ploidy params
-    if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="FAIL") {
+    if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="FAIL" | qc[id, pasteu(run.name, "ploidy_type_accepted")]=="FLAG") {
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "newploidy_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "newploidy_ploidy")]
     }
@@ -436,6 +436,11 @@ qc_CNAqc <- function(
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "vafpeaks_ploidy")]
     } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" &
                is.na(qc[id, pasteu(run.name, "vafpeaks_score")])) {
+      qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
+      qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
+    } 
+    # if we have a superclonal cluster, use DPClust parameters
+    if (qc[id, pasteu(run.name, "nsuperclonalpeaks")]>0) {
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
     }
