@@ -475,7 +475,8 @@ qc_CNAqc <- function(
 
   # vafpeaks filter must have passed or be FLAG in order for the sample to pass (ie if not enough mutations to assess, we only use other metrics to assess the call)
   # (flag is only given if vafpeaks doesn't have enough mutations so can't pass or fail it)
-  filters$vafpeaks <- ifelse(qc[ids, pasteu(run.name, "vafpeaks")] == "FAIL", "FAIL", "PASS")                                           
+  #filters$vafpeaks <- ifelse(qc[ids, pasteu(run.name, "vafpeaks")] == "FAIL", "FAIL", "PASS")  
+  filters$vafpeaks <- qc[ids, pasteu(run.name, "vafpeaks")] # retain the FAIL, FLAG, and PASS options                                            
 
   # the ploidy call must be deemed correct, so if diploid, must have a ploidy classified as diploid through PCAWG eqn, and
   # can have no more than qc.config threshold of the genome between 0.5 boundary (if narrow sample (same boundary), or
@@ -484,7 +485,7 @@ qc_CNAqc <- function(
   # and if tetraploid, must have a ploidy classified as tetraploid through PCAWG eqn (psi_t>LOH*-2+2.9)=tetra, else dip), and
   # must have at least 10% of the genome at 1+0, 2+1, or 3+2 states, and
   # must have peaks of mutations in 2:2 regions with multiplicity 1 and 2
-  filters$ploidytype <- ifelse(qc[ids, pasteu(run.name,"ploidy_type_accepted")] == "PASS", "PASS", "FAIL")
+  filters$ploidytype <- ifelse(qc[ids, pasteu(run.name,"ploidy_type_accepted")] == "PASS", "PASS", "FLAG")
   # rest of the filters must be deemed ok
   #filters$basicfilterspassed <- ifelse(filters$chrmissing=="PASS" &
   #                                       filters$chrsizewrong=="PASS" &
