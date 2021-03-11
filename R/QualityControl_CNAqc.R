@@ -387,7 +387,8 @@ qc_CNAqc <- function(
       }
     #} else if (qc[id,pasteu(run.name,"battenberg_ploidy")] > 2.6) {
     } else if (qc[id,pasteu(run.name,"dip.or.tetra")] == "tetra") {
-      ifelse(qc[id,pasteu(run.name,"fgenome_cnodd")] >= thres.incorrecttetraploid.cnodd,"PASS","FAIL")
+      ifelse(qc[id,pasteu(run.name,"fgenome_cnodd")] >= thres.incorrecttetraploid.cnodd, "PASS","FAIL") 
+             #& qc[id, pasteu(run.name, "vafpeaks_tetraploid")] == TRUE,"PASS","FAIL")
     }
 
     # calculate the new ploidy and purity for IF the ploidy is deemed incorrect - not necessarily used
@@ -449,8 +450,8 @@ qc_CNAqc <- function(
   filters <- list()
   # all chrs must be listed at least once in the subclones file
   filters$chrmissing <- ifelse(qc[ids, pasteu(run.name, "n_chrmissing")] != 0, "FAIL", "PASS")
-  # chr size must pass the required threshold listed in the qc confi file
-  filters$chrsizewrong <- ifelse(qc[ids, pasteu(run.name, "n_chrsizeincorrect")] != 0, "FAIL", "PASS")
+  # chr size must pass the required threshold listed in the qc config file
+  filters$chrsizewrong <- ifelse(qc[ids, pasteu(run.name, "n_chrsizeincorrect")] != 0, "FLAG", "PASS")
   # no single homdel can be larger than the threshold listed in the qc config file
   #filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest, "FAIL", "PASS")
   # if total length of homdels is > larger threshold in qc config file (suggested 100MB), flag the sample 
@@ -471,6 +472,7 @@ qc_CNAqc <- function(
   filters$superclonalpeaks <- ifelse(qc[ids, pasteu(run.name, "nsuperclonalpeaks")] != 0, "FAIL", "PASS")
 
   # vafpeaks filter must have passed or be FLAG in order for the sample to pass (ie if not enough mutations to assess, we only use other metrics to assess the call)
+  # (flag is only given if vafpeaks doesn't have enough mutations so can't pass or fail it)
   filters$vafpeaks <- ifelse(qc[ids, pasteu(run.name, "vafpeaks")] == "FAIL", "FAIL", "PASS")                                           
 
   # the ploidy call must be deemed correct, so if diploid, must have a ploidy classified as diploid through PCAWG eqn, and
@@ -482,12 +484,14 @@ qc_CNAqc <- function(
   # must have peaks of mutations in 2:2 regions with multiplicity 1 and 2
   filters$ploidytype <- ifelse(qc[ids, pasteu(run.name,"ploidy_type_accepted")] == "PASS", "PASS", "FAIL")
   # rest of the filters must be deemed ok
-  filters$basicfilterspassed <- ifelse(filters$chrmissing=="PASS" &
-                                         filters$chrsizewrong=="PASS" &
-                                         filters$homodeletions=="PASS" &
-                                         filters$noclonalpeak=="PASS" &
-                                         filters$superclonalpeaks=="PASS" &
-                                         (filters$vafpeaks=="PASS" | filters$vafpeaks=="FLAG"),"PASS","FAIL")
+  #filters$basicfilterspassed <- ifelse(filters$chrmissing=="PASS" &
+  #                                       filters$chrsizewrong=="PASS" &
+  #                                       filters$homodeletions=="PASS" &
+  #                                       filters$noclonalpeak=="PASS" &
+  #                                       filters$superclonalpeaks=="PASS" &
+  #                                       (filters$vafpeaks=="PASS" | filters$vafpeaks=="FLAG"),"PASS","FAIL")
+  
+  # if everything passes                                             
 
   # classify the sample as having passed or failed
   filters <- data.frame(filters, stringsAsFactors=F)
