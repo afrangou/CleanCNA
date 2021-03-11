@@ -459,17 +459,12 @@ qc_CNAqc <- function(
   filters$chrmissing <- ifelse(qc[ids, pasteu(run.name, "n_chrmissing")] != 0, "FAIL", "PASS")
   # chr size must pass the required threshold listed in the qc config file
   filters$chrsizewrong <- ifelse(qc[ids, pasteu(run.name, "n_chrsizeincorrect")] != 0, "FLAG", "PASS")
-  # no single homdel can be larger than the threshold listed in the qc config file
-  #filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest, "FAIL", "PASS")
-  # if total length of homdels is > larger threshold in qc config file (suggested 100MB), flag the sample 
-  if (qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.fail) {
-    filters$homodeletions <- "FAIL"
-  } else if (qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.flag & 
-             qc[ids, pasteu(run.name, "lsegs_homodelall")] <= thres.homodel.homodelall.fail) {
-    filters$homodeletions <- "FLAG"
-  } else {
-    filters$homodeletions <- "PASS"
-  }                                          
+  ## no single homdel can be larger than the threshold listed in the qc config file
+  ##filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest, "FAIL", "PASS")
+  # if total length of homdels is > smaller threshold in qc config file (suggested 10MB), flag the sample
+  # and if total length of homdels is > larger threshold in qc config file (suggested 100MB), fail the sample    
+  filters$homodeletions <-ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] <= thres.homodel.homodelall.flag, "PASS",
+                                 ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.fail,"FAIL","FLAG"))                                             
   #filters$homodeletions <-ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.fail, "FAIL", "PASS")                                              
   # if total length of homdels is > smaller threshold in qc config file (suggested 10MB), flag the sample
   #filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.flag, "FLAG", "PASS")                                            
