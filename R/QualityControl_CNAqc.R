@@ -456,6 +456,34 @@ qc_CNAqc <- function(
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
     }
+                                               
+    # check if the new purity we've chosen differs from the current ones by more than 5% (and it's passed ploidy), if not, pick others
+    # if none of them do, we don't rerun
+    if (abs(qc[id, pasteu(run.name, "reestimated_purity")] - qc[id, pasteu(run.name, "battenberg_purity")]) < 0.05 &
+        qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS") {
+
+        vafpurity = qc[id, pasteu(run.name, "vafpeaks_purity")] == qc[id, pasteu(run.name, "reestimated_purity")]
+        dpcpurity = qc[id, pasteu(run.name, "dpclust_purity")] == qc[id, pasteu(run.name, "reestimated_purity")]
+
+        # if currently using vafpeaks purity for next run
+        if (vafpurity==T) {
+                # check if dpclust purity diffes from current purity estimate by more than 5%, if so, use it, if not, mark sample as having no new possible params
+                if (abs(qc[id, pasteu(run.name, "dpclust_purity")] - qc[id, pasteu(run.name, "battenberg_purity")]) >= 0.05) {
+                        qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
+                } else {
+                        qc[id, pasteu(run.name, "reestimated_purity")] <- "no params"
+                        qc[id, pasteu(run.name, "reestimated_ploidy")] <- "no params"
+                }
+        } else if (dpcpurity==T) { # else if currently using dpcpurity
+                # check if vafpeaks purity differs from current estimate by more than 5%, if so, use it
+                 if (abs(qc[id, pasteu(run.name, "vafpeaks_purity")] - qc[id, pasteu(run.name, "battenberg_purity")]) >= 0.05) {
+                        qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "vafpeaks_purity")]
+                } else {
+                        qc[id, pasteu(run.name, "reestimated_purity")] <- "no params"
+                        qc[id, pasteu(run.name, "reestimated_ploidy")] <- "no params"
+                }
+        }
+    }                                     
 
   }
 
@@ -498,8 +526,8 @@ qc_CNAqc <- function(
   #                                       filters$homodeletions=="PASS" &
   #                                       filters$noclonalpeak=="PASS" &
   #                                       filters$superclonalpeaks=="PASS" &
-  #                                       (filters$vafpeaks=="PASS" | filters$vafpeaks=="FLAG"),"PASS","FAIL")
-  
+  #                                       (filters$vafpeaks=="PASS" | filters$vafpeaks=="FLAG"),"PASS","FAIL")                                          
+                                  
   # classify the sample as having passed, failed, or is flagged
    # classify the sample as having passed, failed, or is flagged
   filters <- data.frame(filters, stringsAsFactors=F)
@@ -526,8 +554,7 @@ qc_CNAqc <- function(
         filters$noclonalpeak == "PASS" &
         filters$superclonalpeaks == "PASS"
   # set these samples as PASS                                             
-  filters$overallfilter[which(filters$vafonly == T | filters$chrsizeonly == T)] = "PASS"
-  
+  filters$overallfilter[which(filters$vafonly == T | filters$chrsizeonly == T)] = "PASS"                                     
                                                
   filters.qc <- filters
   dimnames(filters.qc) <- list(ids, pasteu(run.name, "filter", colnames(filters.qc)))
