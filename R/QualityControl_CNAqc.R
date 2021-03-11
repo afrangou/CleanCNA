@@ -1,8 +1,6 @@
 # complete QC of Battenberg output
 # written by Anna Frangou and Alex J. Cornish
 #
-# test
-#
 # usage:
 # Rscript QC.R [RUN] [DIR_BATTENBERG] [SUBDIR_CALLSUBCLONES] [SUBDIR_POSTPROCESSING] [SUBDIR_DPCLUST] [SUBDIR_VAFPEAKS] [FILENAME_SAMPLELIST] [FILENAME_CONFIG] [FILENAME_CHRSIZES] [FILENAME_QC]
 #
@@ -454,8 +452,19 @@ qc_CNAqc <- function(
   # chr size must pass the required threshold listed in the qc confi file
   filters$chrsizewrong <- ifelse(qc[ids, pasteu(run.name, "n_chrsizeincorrect")] != 0, "FAIL", "PASS")
   # no single homdel can be larger than the threshold listed in the qc config file
-  filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest, "FAIL", "PASS")
-
+  #filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest, "FAIL", "PASS")
+  # if total length of homdels is > larger threshold in qc config file (suggested 100MB), flag the sample 
+  if (qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.fail) {
+    filters$homodeletions <- "FAIL"
+  } else if (qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.flag & 
+             qc[ids, pasteu(run.name, "lsegs_homodelall")] <= thres.homodel.homodelall.fail) {
+    filters$homodeletions <- "FLAG"
+  } else {
+    filters$homodeletions <- "PASS"
+  }                                          
+  #filters$homodeletions <-ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.fail, "FAIL", "PASS")                                              
+  # if total length of homdels is > smaller threshold in qc config file (suggested 10MB), flag the sample
+  #filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.flag, "FLAG", "PASS")                                            
   # there must exist a clonal peak between the boundaries in the qc config file, dependent on narrow or wide status of sample
   filters$noclonalpeak <- ifelse(qc[ids, pasteu(run.name, "nclonalpeaks")] == 0, "FAIL", "PASS")
   # there must be no superclonal peaks that are of a size larger than the threshold in the qc config file
