@@ -553,8 +553,19 @@ qc_CNAqc <- function(
         filters$ploidytype == "PASS" &
         filters$noclonalpeak == "PASS" &
         filters$superclonalpeaks == "PASS"
-  # set these samples as PASS                                             
-  filters$overallfilter[which(filters$vafonly == T | filters$chrsizeonly == T)] = "PASS"                                     
+  # homdel flagged but everything else is ok, we don't rerun                                             
+  filters$homdelflagonly = (filters$vafpeaks == "FLAG" | filters$vafpeaks == "PASS") &
+        filters$chrmissing == "PASS" &
+        (filters$chrsizewrong == "PASS" | filters$chrsizewrong == "FLAG") &
+        filters$homodeletions == "FLAG" &
+        filters$ploidytype == "PASS" &
+        filters$noclonalpeak == "PASS" &
+        filters$superclonalpeaks == "PASS"
+                                               
+  # set these exceptions as PASS                                             
+  filters$overallfilter[which(filters$vafonly == T | 
+                              filters$chrsizeonly == T |
+                              filters$homdelflagonly == T)] = "PASS"                                     
                                                
   filters.qc <- filters
   dimnames(filters.qc) <- list(ids, pasteu(run.name, "filter", colnames(filters.qc)))
