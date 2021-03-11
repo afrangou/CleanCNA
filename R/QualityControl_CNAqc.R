@@ -241,9 +241,12 @@ qc_CNAqc <- function(
     segs.conditions$cnodd <- segs.auto[
       (((segs.auto$nMaj1_A == 2 & segs.auto$nMin1_A == 1) | (segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 2)) |
          ((segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 0) | (segs.auto$nMaj1_A == 0 & segs.auto$nMin1_A == 1)) |
-         ((segs.auto$nMaj1_A == 3 & segs.auto$nMin1_A == 2) | (segs.auto$nMaj1_A == 2 & segs.auto$nMin1_A == 3))) &
+         ((segs.auto$nMaj1_A == 3 & segs.auto$nMin1_A == 2) | (segs.auto$nMaj1_A == 2 & segs.auto$nMin1_A == 3)) | 
+         ((segs.auto$nMaj1_A == 3 & segs.auto$nMin1_A == 0) | (segs.auto$nMaj1_A == 0 & segs.auto$nMin1_A == 3)) | 
+         ((segs.auto$nMaj1_A == 5 & segs.auto$nMin1_A == 0) | (segs.auto$nMaj1_A == 0 & segs.auto$nMin1_A == 5)) |
+         ((segs.auto$nMaj1_A == 4 & segs.auto$nMin1_A == 1) | (segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 4))) &
         segs.auto$frac1_A == 1,
-      ] # copy number is 2:1 or 1:0 or 3:2 and there is no evidence of sub-clonal change
+      ] # copy number is 1:0, 2:1, 3:0, 5:0, 4:1, or 3:2 and there is no evidence of sub-clonal change
 
     segs.conditions$aroundpoint5.narrow <- segs.auto[
       segs.auto$frac1_A <= thres.50pcpeak.upper & segs.auto$frac1_A >= thres.50pcpeak.lower,
