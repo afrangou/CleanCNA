@@ -1,6 +1,8 @@
 # complete QC of Battenberg output
 # written by Anna Frangou and Alex J. Cornish
 #
+# test
+#
 # usage:
 # Rscript QC.R [RUN] [DIR_BATTENBERG] [SUBDIR_CALLSUBCLONES] [SUBDIR_POSTPROCESSING] [SUBDIR_DPCLUST] [SUBDIR_VAFPEAKS] [FILENAME_SAMPLELIST] [FILENAME_CONFIG] [FILENAME_CHRSIZES] [FILENAME_QC]
 #
