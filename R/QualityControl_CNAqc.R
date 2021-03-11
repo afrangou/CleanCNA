@@ -152,15 +152,16 @@ qc_CNAqc <- function(
   if (run > 1) ids <- ids[which(qc[ids, pasteu(paste0("run", run - 1), "filter_overallfilter")] == "FAIL")] # identify samples not passing previous run
   if (length(ids) == 0) stop("no tumour-normal pairs to QC")
 
-  # add purity and ploidy estimates from BB (cellularity file) and dpclust (optimaInfo)
+  # add purity and ploidy estimates from BB (cellularity file) and dpclust (optimaInfo) - dpclust ploidy reestimation comes later because we need dip/tetra classification first 
   log.message("add purity and ploidy estimates")
   qc[ids, pasteu(run.name, "battenberg_purity")] <- battenberg.purity[ids, ifelse("cellularity" %in% colnames(battenberg.purity),'cellularity','purity')] 
   qc[ids, pasteu(run.name, "battenberg_ploidy")] <- battenberg.purity[ids, "psi"]
   qc[ids, pasteu(run.name, "dpclust_purity")] <- sapply(ids, function(id) estimate.dpclust.purity(dpclust[[id]], qc[id, pasteu(run.name, "battenberg_purity")]))
-  qc[ids, pasteu(run.name, "dpclust_ploidy")] <- sapply(ids, function(id) estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")], 
-                                                                                              qc[id, pasteu(run.name, "battenberg_ploidy")], 
-                                                                                              qc[id, pasteu(run.name, "dpclust_purity")],
-                                                                                             qc[id, pasteu(run.name, "dip.or.tetra")])
+  qc[ids, pasteu(run.name, "dpclust_ploidy")] <- NA # dpclust ploidy reestimation comes later because we need dip/tetra classification first - holding column in same place
+  #qc[ids, pasteu(run.name, "dpclust_ploidy")] <- sapply(ids, function(id) estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")], 
+  #                                                                                            qc[id, pasteu(run.name, "battenberg_ploidy")], 
+  #                                                                                            qc[id, pasteu(run.name, "dpclust_purity")],
+  #                                                                                           qc[id, pasteu(run.name, "dip.or.tetra")])
   qc[ids, pasteu(run.name, "fivepc_cluster_size")] <- fivepcclusters[ids]
   for (str in c("vafpeaks_purity", "vafpeaks_ploidy", "vafpeaks_score", "reestimated_purity", "reestimated_ploidy")) qc[[pasteu(run.name, str)]] <- NA
 
@@ -282,6 +283,11 @@ qc_CNAqc <- function(
     qc[id, pasteu(run.name, "dip.or.tetra")] <- ifelse(qc[id,pasteu(run.name,"psi_t")] > qc[id,pasteu(run.name,"minorCNzerotimesminus2plus2.9")],
                                                        "tetra",
                                                        "dip")
+    # classify dpclust ploidy now we have dip/tetra classification
+    qc[ids, pasteu(run.name, "dpclust_ploidy")] <- sapply(ids, function(id) estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")], 
+                                                                                              qc[id, pasteu(run.name, "battenberg_ploidy")], 
+                                                                                              qc[id, pasteu(run.name, "dpclust_purity")],
+                                                                                             qc[id, pasteu(run.name, "dip.or.tetra")])                                            
 
     # peak closest to clonal
     qc[id, pasteu(run.name, "peak.closest.to.clonal")] <- min(abs(1-dpclust[[id]]$location))
@@ -402,13 +408,13 @@ qc_CNAqc <- function(
                                                                             qc[id, pasteu(run.name,"dip.or.tetra")])
 
     # add pass or fail for basic filters
-    qc[id, pasteu(run.name, "basic_filters_passed")] <- ifelse(qc[id, pasteu(run.name, "n_chrmissing")] != 0 |
-                                                                 qc[id, pasteu(run.name, "n_chrsizeincorrect")] != 0 |
-                                                                 qc[id, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest |
-                                                                 qc[id, pasteu(run.name, "nclonalpeaks")] == 0 |
-                                                                 qc[id, pasteu(run.name, "nsuperclonalpeaks")] != 0 |
-                                                                 #is.na(qc[id, pasteu(run.name, "vafpeaks_score")]) | # flagging this as unassessable instead of failing it through insufficient mutations.
-                                                                 abs(qc[id, pasteu(run.name, "vafpeaks_score")]) > thres.purity.diff,"FAIL","PASS")
+    #qc[id, pasteu(run.name, "basic_filters_passed")] <- ifelse(qc[id, pasteu(run.name, "n_chrmissing")] != 0 |
+    #                                                             qc[id, pasteu(run.name, "n_chrsizeincorrect")] != 0 |
+    #                                                             qc[id, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest |
+    #                                                             qc[id, pasteu(run.name, "nclonalpeaks")] == 0 |
+    #                                                             qc[id, pasteu(run.name, "nsuperclonalpeaks")] != 0 |
+    #                                                             #is.na(qc[id, pasteu(run.name, "vafpeaks_score")]) | # flagging this as unassessable instead of failing it through insufficient mutations.
+    #                                                             abs(qc[id, pasteu(run.name, "vafpeaks_score")]) > thres.purity.diff,"FAIL","PASS")
 
     # select reestimated purity/ploidy (these are only used if sample fails with filters)
     # if sample's ploidy is deemed wrong, make these the new parameters
@@ -491,9 +497,7 @@ qc_CNAqc <- function(
   #                                       filters$superclonalpeaks=="PASS" &
   #                                       (filters$vafpeaks=="PASS" | filters$vafpeaks=="FLAG"),"PASS","FAIL")
   
-  # if everything passes                                             
-
-  # classify the sample as having passed or failed
+  # classify the sample as having passed, failed, or is flagged
   filters <- data.frame(filters, stringsAsFactors=F)
   filters$overallfilter <- apply(filters, 1, get.worst.filter)
   filters.qc <- filters
