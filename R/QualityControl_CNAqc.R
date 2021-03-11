@@ -500,7 +500,7 @@ qc_CNAqc <- function(
   filters <- data.frame(filters, stringsAsFactors=F)
                                                
   # if any fail or flag exists at all, set that sample to rerun
-  filters$worstfilter <- apply(filters, 1, get.worst.filter)
+  filters$overallfilter <- apply(filters, 1, get.worst.filter)
 
   # but now overwrite those samples in these special cases that we don't want to rerun
   # at this point they are marked with a flag or fail overall if any criteria has a flag or a fail 
@@ -521,7 +521,7 @@ qc_CNAqc <- function(
         filters$noclonalpeak == "PASS" &
         filters$superclonalpeaks == "PASS"
   # set these samples as PASS                                             
-  filters$worstfilter[which(filters$vafonly == T | filters$chrsizeonly == T)] = "PASS"
+  filters$overallfilter[which(filters$vafonly == T | filters$chrsizeonly == T)] = "PASS"
   
                                                
   filters.qc <- filters
