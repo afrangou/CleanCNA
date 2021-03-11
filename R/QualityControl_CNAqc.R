@@ -287,7 +287,7 @@ qc_CNAqc <- function(
     qc[ids, pasteu(run.name, "dpclust_ploidy")] <- sapply(ids, function(id) estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")], 
                                                                                               qc[id, pasteu(run.name, "battenberg_ploidy")], 
                                                                                               qc[id, pasteu(run.name, "dpclust_purity")],
-                                                                                             qc[id, pasteu(run.name, "dip.or.tetra")])                                            
+                                                                                             qc[id, pasteu(run.name, "dip.or.tetra")]))                                           
 
     # peak closest to clonal
     qc[id, pasteu(run.name, "peak.closest.to.clonal")] <- min(abs(1-dpclust[[id]]$location))
