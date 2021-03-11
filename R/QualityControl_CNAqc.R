@@ -157,7 +157,10 @@ qc_CNAqc <- function(
   qc[ids, pasteu(run.name, "battenberg_purity")] <- battenberg.purity[ids, ifelse("cellularity" %in% colnames(battenberg.purity),'cellularity','purity')] 
   qc[ids, pasteu(run.name, "battenberg_ploidy")] <- battenberg.purity[ids, "psi"]
   qc[ids, pasteu(run.name, "dpclust_purity")] <- sapply(ids, function(id) estimate.dpclust.purity(dpclust[[id]], qc[id, pasteu(run.name, "battenberg_purity")]))
-  qc[ids, pasteu(run.name, "dpclust_ploidy")] <- sapply(ids, function(id) estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")], qc[id, pasteu(run.name, "battenberg_ploidy")], qc[id, pasteu(run.name, "dpclust_purity")]))
+  qc[ids, pasteu(run.name, "dpclust_ploidy")] <- sapply(ids, function(id) estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")], 
+                                                                                              qc[id, pasteu(run.name, "battenberg_ploidy")], 
+                                                                                              qc[id, pasteu(run.name, "dpclust_purity")],
+                                                                                             qc[id, pasteu(run.name, "dip.or.tetra")])
   qc[ids, pasteu(run.name, "fivepc_cluster_size")] <- fivepcclusters[ids]
   for (str in c("vafpeaks_purity", "vafpeaks_ploidy", "vafpeaks_score", "reestimated_purity", "reestimated_ploidy")) qc[[pasteu(run.name, str)]] <- NA
 
@@ -392,7 +395,7 @@ qc_CNAqc <- function(
 
     qc[id, pasteu(run.name, "newploidy_ploidy")] <- switch.ploidy.get.ploidy(qc[id, pasteu(run.name,"battenberg_purity")],
                                                                              qc[id, pasteu(run.name,"battenberg_ploidy")],
-                                                                            qc[id, pasteu(run.name,"dip.or.tetra")]))
+                                                                            qc[id, pasteu(run.name,"dip.or.tetra")])
 
     # add pass or fail for basic filters
     qc[id, pasteu(run.name, "basic_filters_passed")] <- ifelse(qc[id, pasteu(run.name, "n_chrmissing")] != 0 |
