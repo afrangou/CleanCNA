@@ -471,16 +471,16 @@ qc_CNAqc <- function(
                 if (abs(qc[id, pasteu(run.name, "dpclust_purity")] - qc[id, pasteu(run.name, "battenberg_purity")]) >= 0.05) {
                         qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
                 } else {
-                        qc[id, pasteu(run.name, "reestimated_purity")] <- "no params"
-                        qc[id, pasteu(run.name, "reestimated_ploidy")] <- "no params"
+                        qc[id, pasteu(run.name, "reestimated_purity")] <- NA
+                        qc[id, pasteu(run.name, "reestimated_ploidy")] <- NA
                 }
         } else if (dpcpurity==T) { # else if currently using dpcpurity
                 # check if vafpeaks purity differs from current estimate by more than 5%, if so, use it
                  if (abs(qc[id, pasteu(run.name, "vafpeaks_purity")] - qc[id, pasteu(run.name, "battenberg_purity")]) >= 0.05) {
                         qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "vafpeaks_purity")]
                 } else {
-                        qc[id, pasteu(run.name, "reestimated_purity")] <- "no params"
-                        qc[id, pasteu(run.name, "reestimated_ploidy")] <- "no params"
+                        qc[id, pasteu(run.name, "reestimated_purity")] <- NA
+                        qc[id, pasteu(run.name, "reestimated_ploidy")] <- NA
                 }
         }
     }                                     
