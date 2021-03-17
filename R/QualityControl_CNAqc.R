@@ -246,7 +246,10 @@ qc_CNAqc <- function(
          ((segs.auto$nMaj1_A == 3 & segs.auto$nMin1_A == 2) | (segs.auto$nMaj1_A == 2 & segs.auto$nMin1_A == 3)) | 
          ((segs.auto$nMaj1_A == 3 & segs.auto$nMin1_A == 0) | (segs.auto$nMaj1_A == 0 & segs.auto$nMin1_A == 3)) | 
          ((segs.auto$nMaj1_A == 5 & segs.auto$nMin1_A == 0) | (segs.auto$nMaj1_A == 0 & segs.auto$nMin1_A == 5)) |
-         ((segs.auto$nMaj1_A == 4 & segs.auto$nMin1_A == 1) | (segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 4))) &
+         ((segs.auto$nMaj1_A == 4 & segs.auto$nMin1_A == 1) | (segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 4)) |
+         ((segs.auto$nMaj1_A == 3 & segs.auto$nMin1_A == 1) | (segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 3)) |
+         ((segs.auto$nMaj1_A == 5 & segs.auto$nMin1_A == 1) | (segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 5)) |
+         ((segs.auto$nMaj1_A == 5 & segs.auto$nMin1_A == 3) | (segs.auto$nMaj1_A == 3 & segs.auto$nMin1_A == 5))) &
         segs.auto$frac1_A == 1,
       ] # copy number is 1:0, 2:1, 3:0, 5:0, 4:1, or 3:2 and there is no evidence of sub-clonal change
 
