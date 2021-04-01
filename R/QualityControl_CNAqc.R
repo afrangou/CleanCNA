@@ -237,9 +237,22 @@ qc_CNAqc <- function(
       segs.auto$ctClone1 == 0 |
         sapply(as.double(segs.auto$ctClone2), identical, 0.0),
       ] # homozygous deletion of either major or (if evidence of sub-clonality) minor clone
-
-    segs.conditions$homodellargest <- if (nrow(segs.conditions$homodelall)) segs.conditions$homodelall[which(segs.conditions$homodelall$size == max(segs.conditions$homodelall$size))[1], ] else segs.conditions$homodelall
-
+                                              
+    segs.conditions$homodelallclonal <- segs.auto[
+      which(segs.auto$nMaj1_A == 0 & segs.auto$nMin1_A==0 & segs.auto$frac1_A == 1),
+     ] # clonal homdels     
+                                               
+    segs.conditions$homodelallsubclonal <- segs.auto[
+      which((segs.auto$nMaj1_A == 0 & segs.auto$nMin1_A==0 & segs.auto$frac1_A != 1) | 
+      (segs.auto$nMaj2_A == 0 & segs.auto$nMin2_A==0)),
+     ] # subclonal homdels     
+                                               
+    segs.conditions$homodellargest <- if (nrow(segs.conditions$homodelall)) {
+      segs.conditions$homodelall[which(segs.conditions$homodelall$size == max(segs.conditions$homodelall$size))[1], ]
+    } else {
+      segs.conditions$homodelall
+    } # if we have homdels, find max size 
+                                               
     segs.conditions$cnodd <- segs.auto[
       (((segs.auto$nMaj1_A == 2 & segs.auto$nMin1_A == 1) | (segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 2)) |
          ((segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 0) | (segs.auto$nMaj1_A == 0 & segs.auto$nMin1_A == 1)) |
@@ -499,8 +512,12 @@ qc_CNAqc <- function(
   ##filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest, "FAIL", "PASS")
   # if total length of homdels is > smaller threshold in qc config file (suggested 10MB), flag the sample
   # and if total length of homdels is > larger threshold in qc config file (suggested 100MB), fail the sample    
-  filters$homodeletions <-ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] <= thres.homodel.homodelall.flag, "PASS",
-                                 ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.fail,"FAIL","FLAG"))                                             
+  filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] <= thres.homodel.homodelall.flag, "PASS",
+                                 ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.fail,"FAIL","FLAG"))
+  # if total fraction of subclonal homdels is >20%, fail the sample on homdels
+  #filters$homodeletions <- if (qc[ids, pasteu(run.name, "fgenome_homodelallsubclonal")] <= thres.homodel.homodelallsubclonal.fail) {
+  #  filters$homodeletions <- "PASS"                                            
+                                               
   #filters$homodeletions <-ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.fail, "FAIL", "PASS")                                              
   # if total length of homdels is > smaller threshold in qc config file (suggested 10MB), flag the sample
   #filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.flag, "FLAG", "PASS")                                            
