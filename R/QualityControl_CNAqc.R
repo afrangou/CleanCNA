@@ -430,32 +430,31 @@ qc_CNAqc <- function(
     if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="FAIL" | qc[id, pasteu(run.name, "ploidy_type_accepted")]=="FLAG") {
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "newploidy_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "newploidy_ploidy")]
-    }
-    # if ploidy type passes, and we have vafpeaks params, run with those (if we don't have vafpeaks here, use dpclust)
-    if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" &
+    } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" &
         # (qc[id, pasteu(run.name, "vafpeaks_score")] > thres.purity.diff &
-        !is.na(qc[id, pasteu(run.name, "vafpeaks_score")])) {
+        !is.na(qc[id, pasteu(run.name, "vafpeaks_score")])) { # if ploidy type passes, and we have vafpeaks params, run with those (if we don't have vafpeaks here, use dpclust)
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "vafpeaks_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "vafpeaks_ploidy")]
     } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" &
-               is.na(qc[id, pasteu(run.name, "vafpeaks_score")])) {
+               is.na(qc[id, pasteu(run.name, "vafpeaks_score")])) {  #if ploidy type passes, and we have no vafpeaks params
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
-    } 
-    # if we have a superclonal cluster, use DPClust parameters
-    if (qc[id, pasteu(run.name, "nsuperclonalpeaks")]>0) {
+    } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" & 
+               qc[id, pasteu(run.name, "nsuperclonalpeaks")]>0) { # ploidy passes and we have a superclonal cluster, use DPClust parameters
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
-    }
-    # if ploidy passes, and we're on the last run, overwrite vafpeaks params with dpclust params
-    # if ploidy has failed, it reruns with new ploidy as above (this could flipflop)
-    if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" & run.name=="run3") {
+    } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" &
+              qc[id, pasteu(run.name, "peak.closest.to.clonal")] <= 0.95 & 
+              qc[id, pasteu(run.name, "peak.closest.to.clonal")] >= 0.9 & 
+             qc[id, pasteu(run.name, "nsuperclonalpeaks")]==0) { # ploidy passes, no superclone, highest cluster is 0.9-0.95, use DPC params
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
-    }
-                                               
-    # if homdels are too large, use dpclust parameters not vafpeaks parameters
-    if (qc[id, pasteu(run.name, "lsegs_homodelall")] >= 100000000) {
+    } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" & 
+               run.name=="run3") { # if ploidy passes, and we're on the last run, overwrite vafpeaks params with DPClust parameters
+      qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
+      qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
+    } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" & 
+               qc[id, pasteu(run.name, "lsegs_homodelall")] >= 100000000) { # if homdels are too large, use dpclust parameters not vafpeaks parameters
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
     }
