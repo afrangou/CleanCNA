@@ -233,19 +233,28 @@ qc_CNAqc <- function(
         segs.auto$frac1_A == 1,
       ] # copy number is 3:2 and there is no evidence of sub-clonal change
 
-    segs.conditions$homodelall <- segs.auto[
-      segs.auto$ctClone1 == 0 |
-        sapply(as.double(segs.auto$ctClone2), identical, 0.0),
-      ] # homozygous deletion of either major or (if evidence of sub-clonality) minor clone
-                                              
-    segs.conditions$homodelallclonal <- segs.auto[
-      which(segs.auto$nMaj1_A == 0 & segs.auto$nMin1_A==0 & segs.auto$frac1_A == 1),
-     ] # clonal homdels     
                                                
-    segs.conditions$homodelallsubclonal <- segs.auto[
-      which((segs.auto$nMaj1_A == 0 & segs.auto$nMin1_A==0 & segs.auto$frac1_A != 1) | 
-      (segs.auto$nMaj2_A == 0 & segs.auto$nMin2_A==0)),
-     ] # subclonal homdels     
+    segs.auto.tmp <- segs.auto # tmp copy of segs.auto 
+    segs.auto.tmp$ctClone1 <- segs.auto.tmp$nMaj1_A + segs.auto.tmp$nMin1_A
+    segs.auto.tmp$ctClone2 <- segs.auto.tmp$nMaj2_A + segs.auto.tmp$nMin2_A                                           
+    
+    # remove all subclonal homdels < 20% from segs.tmp.auto                                           
+    toremove <- which(segs.auto.tmp$nMaj1_A == 0 & segs.auto.tmp$frac1_A <= 0.2)
+    if (length(toremove) > 0) { segs.auto.tmp <- segs.auto.tmp[-toremove,] }
+                                               
+    segs.conditions$homodelall <- segs.auto.tmp[
+      segs.auto.tmp$ctClone1 == 0 |
+        sapply(as.double(segs.auto.tmp$ctClone2), identical, 0.0),
+      ] # homozygous deletion of either major or (if evidence of sub-clonality > 20%) minor clone
+                                              
+    segs.conditions$homodelallclonal <- segs.auto.tmp[
+      which(segs.auto.tmp$nMaj1_A == 0 & segs.auto.tmp$nMin1_A==0 & segs.auto.tmp$frac1_A == 1),
+     ] # clonal homdels     
+
+    segs.conditions$homodelallsubclonal <- segs.auto.tmp[
+      which((segs.auto.tmp$nMaj1_A == 0 & segs.auto.tmp$nMin1_A==0 & segs.auto.tmp$frac1_A != 1) | 
+      (segs.auto.tmp$nMaj2_A == 0 & segs.auto.tmp$nMin2_A==0)),
+     ] # subclonal homdels (only those > 20%)    
                                                
     segs.conditions$homodellargest <- if (nrow(segs.conditions$homodelall)) {
       segs.conditions$homodelall[which(segs.conditions$homodelall$size == max(segs.conditions$homodelall$size))[1], ]
@@ -264,7 +273,7 @@ qc_CNAqc <- function(
          ((segs.auto$nMaj1_A == 5 & segs.auto$nMin1_A == 1) | (segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 5)) |
          ((segs.auto$nMaj1_A == 5 & segs.auto$nMin1_A == 3) | (segs.auto$nMaj1_A == 3 & segs.auto$nMin1_A == 5))) &
         segs.auto$frac1_A == 1,
-      ] # copy number is 1:0, 2:1, 3:0, 5:0, 4:1, or 3:2 and there is no evidence of sub-clonal change
+      ] # copy number is 1:0, 2:1, 3:0, 5:0, 4:1, 3:2, 3:1, 5:1, or 5:3 and there is no evidence of sub-clonal change
 
     segs.conditions$aroundpoint5.narrow <- segs.auto[
       segs.auto$frac1_A <= thres.50pcpeak.upper & segs.auto$frac1_A >= thres.50pcpeak.lower,
