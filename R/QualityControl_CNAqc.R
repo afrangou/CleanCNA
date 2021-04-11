@@ -482,7 +482,7 @@ qc_CNAqc <- function(
     }
                                                
     # if we have too much of the genome with homdels and the sample is diploid, switch to tetraploid
-    if (qc[id,pasteu(run.name,"dip.or.tetra")] == "dip" & 
+    if (qc[ids,pasteu(run.name,"dip.or.tetra")] == "dip" & 
         qc[ids, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest) { 
          qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "newploidy_purity")]
          qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "newploidy_ploidy")]
