@@ -522,10 +522,14 @@ qc_CNAqc <- function(
 
   log.message("applying filters")
   filters <- list()
+  chrsizerun1 <- list()                                             
   # all chrs must be listed at least once in the subclones file
   filters$chrmissing <- ifelse(qc[ids, pasteu(run.name, "n_chrmissing")] != 0, "FAIL", "PASS")
   # chr size must pass the required threshold listed in the qc config file
   filters$chrsizewrong <- ifelse(qc[ids, pasteu(run.name, "n_chrsizeincorrect")] != 0, "FLAG", "PASS")
+  # chr size must pass the required threshold listed in the qc config file in first run (when rerunning in certain cases later)
+  # this is in a diff list so as not to interfere with filters list                                             
+  chrsizerun1$chrsizewrongrun1 <- ifelse(qc[ids, "run1_n_chrsizeincorrect"] != 0, "FLAG", "PASS")                                             
   ## no single homdel can be larger than the threshold listed in the qc config file
   filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest, "FAIL", "PASS")
   # if total length of homdels is > smaller threshold in qc config file (suggested 10MB), flag the sample
@@ -582,10 +586,14 @@ qc_CNAqc <- function(
         filters$ploidytype == "PASS" &
         filters$noclonalpeak == "PASS" &
         filters$superclonalpeaks == "PASS"
-  # chr length flagged but everything else is ok, we don't rerun
-  filters$chrsizeonly = (filters$vafpeaks == "FLAG" | filters$vafpeaks == "PASS") &
+  # chr length flagged but everything else is ok, if run==1, we rerun in the normal way    
+  # if chr length flagged and everything else is ok and run!=1, we check to see if the first run had a flag for chr size, 
+  # if so, this is long runs of homozygosity, so we don't rerun                                              
+  filters$chrsizeonly = (filters$vafpeaks == "FLAG" | filters$vafpeaks == "PASS") &                                    
         filters$chrmissing == "PASS" &
         filters$chrsizewrong == "FLAG" &
+        run!=1 &
+        chrsizerun1$chrsizewrongrun1 == "FLAG" &                                       
         filters$homodeletions == "PASS" &
         filters$ploidytype == "PASS" &
         filters$noclonalpeak == "PASS" &
@@ -597,7 +605,7 @@ qc_CNAqc <- function(
         filters$homodeletions == "FLAG" &
         filters$ploidytype == "PASS" &
         filters$noclonalpeak == "PASS" &
-        filters$superclonalpeaks == "PASS"
+        filters$superclonalpeaks == "PASS"                                                  
                                                
   # set these exceptions as PASS                                             
   filters$overallfilter[which(filters$vafonly == T | 
