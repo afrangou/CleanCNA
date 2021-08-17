@@ -239,7 +239,7 @@ qc_CNAqc <- function(
     segs.auto.tmp$ctClone2 <- segs.auto.tmp$nMaj2_A + segs.auto.tmp$nMin2_A                                           
     
     # remove all subclonal homdels < 20% from segs.tmp.auto                                           
-    toremove <- which(segs.auto.tmp$nMaj1_A == 0 & segs.auto.tmp$frac1_A <= 0.2)
+    toremove <- which((segs.auto.tmp$nMaj1_A == 0 & segs.auto.tmp$frac1_A <= 0.2) | ((!(is.na(segs.auto.tmp$nMaj2_A) | is.na(segs.auto.tmp$frac2_A))) & segs.auto.tmp$nMaj2_A == 0 & segs.auto.tmp$frac2_A <= 0.2))
     if (length(toremove) > 0) { segs.auto.tmp <- segs.auto.tmp[-toremove,] }
                                                
     segs.conditions$homodelall <- segs.auto.tmp[
