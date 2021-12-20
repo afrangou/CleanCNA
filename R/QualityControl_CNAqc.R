@@ -149,18 +149,17 @@ qc_CNAqc <- function(
 
   # if not the first run, filter down to only deal with samples that failed previous runs
   if (sum(grepl(paste0(run.name, "_"), colnames(qc)))) warning("columns already found for run ", run)
-  if (run > 1) ids <- ids[which(qc[ids, pasteu(paste0("run", run - 1), "filter_overallfilter")] == "FAIL")] # identify samples not passing previous run
+  if (run > 1) ids <- ids[which(qc[ids, pasteu(paste0("run", run - 1), "filter_overallfilter")] == "FAIL" | 
+                               qc[ids, pasteu(paste0("run", run - 1), "filter_overallfilter")] == "FLAG")] # identify samples not passing previous run
   if (length(ids) == 0) stop("no tumour-normal pairs to QC")
 
-  # add purity and ploidy estimates from BB (cellularity file) and dpclust (optimaInfo)
+  # add purity and ploidy estimates from BB (cellularity file) and dpclust (optimaInfo) - dpclust ploidy reestimation comes later because we need dip/tetra classification first 
   log.message("add purity and ploidy estimates")
   qc[ids, pasteu(run.name, "battenberg_purity")] <- battenberg.purity[ids, ifelse("cellularity" %in% colnames(battenberg.purity),'cellularity','purity')] 
   qc[ids, pasteu(run.name, "battenberg_ploidy")] <- battenberg.purity[ids, "psi"]
   qc[ids, pasteu(run.name, "dpclust_purity")] <- sapply(ids, function(id) estimate.dpclust.purity(dpclust[[id]], qc[id, pasteu(run.name, "battenberg_purity")]))
-  qc[ids, pasteu(run.name, "dpclust_ploidy")] <- sapply(ids, function(id) estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")], 
-                                                                                              qc[id, pasteu(run.name, "battenberg_ploidy")], 
-                                                                                              qc[id, pasteu(run.name, "dpclust_purity")],
-                                                                                             qc[id, pasteu(run.name, "dip.or.tetra")]))
+  qc[ids, pasteu(run.name, "dpclust_ploidy")] <- NA # dpclust ploidy reestimation comes later because we need dip/tetra classification first - holding column in same place
+
   qc[ids, pasteu(run.name, "fivepc_cluster_size")] <- fivepcclusters[ids]
   for (str in c("vafpeaks_purity", "vafpeaks_ploidy", "vafpeaks_score", "reestimated_purity", "reestimated_ploidy")) qc[[pasteu(run.name, str)]] <- NA
 
@@ -231,13 +230,35 @@ qc_CNAqc <- function(
         segs.auto$frac1_A == 1,
       ] # copy number is 3:2 and there is no evidence of sub-clonal change
 
-    segs.conditions$homodelall <- segs.auto[
-      segs.auto$ctClone1 == 0 |
-        sapply(as.double(segs.auto$ctClone2), identical, 0.0),
-      ] # homozygous deletion of either major or (if evidence of sub-clonality) minor clone
+                                               
+    segs.auto.tmp <- segs.auto # tmp copy of segs.auto 
+    segs.auto.tmp$ctClone1 <- segs.auto.tmp$nMaj1_A + segs.auto.tmp$nMin1_A
+    segs.auto.tmp$ctClone2 <- segs.auto.tmp$nMaj2_A + segs.auto.tmp$nMin2_A                                           
+    
+    # remove all subclonal homdels < 20% from segs.tmp.auto                                           
+    toremove <- which((segs.auto.tmp$nMaj1_A == 0 & segs.auto.tmp$frac1_A <= 0.2) | ((!(is.na(segs.auto.tmp$nMaj2_A) | is.na(segs.auto.tmp$frac2_A))) & segs.auto.tmp$nMaj2_A == 0 & segs.auto.tmp$frac2_A <= 0.2))
+    if (length(toremove) > 0) { segs.auto.tmp <- segs.auto.tmp[-toremove,] }
+                                               
+    segs.conditions$homodelall <- segs.auto.tmp[
+      segs.auto.tmp$ctClone1 == 0 |
+        sapply(as.double(segs.auto.tmp$ctClone2), identical, 0.0),
+      ] # homozygous deletion of either major or (if evidence of sub-clonality > 20%) minor clone
+                                              
+    segs.conditions$homodelallclonal <- segs.auto.tmp[
+      which(segs.auto.tmp$nMaj1_A == 0 & segs.auto.tmp$nMin1_A==0 & segs.auto.tmp$frac1_A == 1),
+     ] # clonal homdels     
 
-    segs.conditions$homodellargest <- if (nrow(segs.conditions$homodelall)) segs.conditions$homodelall[which(segs.conditions$homodelall$size == max(segs.conditions$homodelall$size))[1], ] else segs.conditions$homodelall
-
+    segs.conditions$homodelallsubclonal <- segs.auto.tmp[
+      which((segs.auto.tmp$nMaj1_A == 0 & segs.auto.tmp$nMin1_A==0 & segs.auto.tmp$frac1_A != 1) | 
+      (segs.auto.tmp$nMaj2_A == 0 & segs.auto.tmp$nMin2_A==0)),
+     ] # subclonal homdels (only those > 20%)    
+                                               
+    segs.conditions$homodellargest <- if (nrow(segs.conditions$homodelall)) {
+      segs.conditions$homodelall[which(segs.conditions$homodelall$size == max(segs.conditions$homodelall$size))[1], ]
+    } else {
+      segs.conditions$homodelall
+    } # if we have homdels, find max size 
+                                               
     segs.conditions$cnodd <- segs.auto[
       (((segs.auto$nMaj1_A == 2 & segs.auto$nMin1_A == 1) | (segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 2)) |
          ((segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 0) | (segs.auto$nMaj1_A == 0 & segs.auto$nMin1_A == 1)) |
@@ -249,7 +270,7 @@ qc_CNAqc <- function(
          ((segs.auto$nMaj1_A == 5 & segs.auto$nMin1_A == 1) | (segs.auto$nMaj1_A == 1 & segs.auto$nMin1_A == 5)) |
          ((segs.auto$nMaj1_A == 5 & segs.auto$nMin1_A == 3) | (segs.auto$nMaj1_A == 3 & segs.auto$nMin1_A == 5))) &
         segs.auto$frac1_A == 1,
-      ] # copy number is 1:0, 2:1, 3:0, 5:0, 4:1, or 3:2 and there is no evidence of sub-clonal change
+      ] # copy number is 1:0, 2:1, 3:0, 5:0, 4:1, 3:2, 3:1, 5:1, or 5:3 and there is no evidence of sub-clonal change
 
     segs.conditions$aroundpoint5.narrow <- segs.auto[
       segs.auto$frac1_A <= thres.50pcpeak.upper & segs.auto$frac1_A >= thres.50pcpeak.lower,
@@ -285,6 +306,12 @@ qc_CNAqc <- function(
     qc[id, pasteu(run.name, "dip.or.tetra")] <- ifelse(qc[id,pasteu(run.name,"psi_t")] > qc[id,pasteu(run.name,"minorCNzerotimesminus2plus2.9")],
                                                        "tetra",
                                                        "dip")
+                                               
+    # classify dpclust ploidy now we have dip/tetra classification
+    qc[id, pasteu(run.name, "dpclust_ploidy")] <- estimate.new.ploidy(qc[id, pasteu(run.name, "battenberg_purity")], 
+                                                                                              qc[id, pasteu(run.name, "battenberg_ploidy")], 
+                                                                                              qc[id, pasteu(run.name, "dpclust_purity")],
+                                                                                             qc[id, pasteu(run.name, "dip.or.tetra")])                                           
 
     # peak closest to clonal
     qc[id, pasteu(run.name, "peak.closest.to.clonal")] <- min(abs(1-dpclust[[id]]$location))
@@ -390,7 +417,8 @@ qc_CNAqc <- function(
       }
     #} else if (qc[id,pasteu(run.name,"battenberg_ploidy")] > 2.6) {
     } else if (qc[id,pasteu(run.name,"dip.or.tetra")] == "tetra") {
-      ifelse(qc[id,pasteu(run.name,"fgenome_cnodd")] >= thres.incorrecttetraploid.cnodd,"PASS","FAIL")
+      ifelse(qc[id,pasteu(run.name,"fgenome_cnodd")] >= thres.incorrecttetraploid.cnodd, "PASS","FAIL") 
+             #& qc[id, pasteu(run.name, "vafpeaks_tetraploid")] == TRUE,"PASS","FAIL")
     }
 
     # calculate the new ploidy and purity for IF the ploidy is deemed incorrect - not necessarily used
@@ -404,13 +432,13 @@ qc_CNAqc <- function(
                                                                             qc[id, pasteu(run.name,"dip.or.tetra")])
 
     # add pass or fail for basic filters
-    qc[id, pasteu(run.name, "basic_filters_passed")] <- ifelse(qc[id, pasteu(run.name, "n_chrmissing")] != 0 |
-                                                                 qc[id, pasteu(run.name, "n_chrsizeincorrect")] != 0 |
-                                                                 qc[id, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest |
-                                                                 qc[id, pasteu(run.name, "nclonalpeaks")] == 0 |
-                                                                 qc[id, pasteu(run.name, "nsuperclonalpeaks")] != 0 |
-                                                                 #is.na(qc[id, pasteu(run.name, "vafpeaks_score")]) | # flagging this as unassessable instead of failing it through insufficient mutations.
-                                                                 abs(qc[id, pasteu(run.name, "vafpeaks_score")]) > thres.purity.diff,"FAIL","PASS")
+    #qc[id, pasteu(run.name, "basic_filters_passed")] <- ifelse(qc[id, pasteu(run.name, "n_chrmissing")] != 0 |
+    #                                                             qc[id, pasteu(run.name, "n_chrsizeincorrect")] != 0 |
+    #                                                             qc[id, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest |
+    #                                                             qc[id, pasteu(run.name, "nclonalpeaks")] == 0 |
+    #                                                             qc[id, pasteu(run.name, "nsuperclonalpeaks")] != 0 |
+    #                                                             #is.na(qc[id, pasteu(run.name, "vafpeaks_score")]) | # flagging this as unassessable instead of failing it through insufficient mutations.
+    #                                                             abs(qc[id, pasteu(run.name, "vafpeaks_score")]) > thres.purity.diff,"FAIL","PASS")
 
     # select reestimated purity/ploidy (these are only used if sample fails with filters)
     # if sample's ploidy is deemed wrong, make these the new parameters
@@ -418,52 +446,109 @@ qc_CNAqc <- function(
     # if it's the last run (4), use DPClust params, unless the sample has switched ploidy twice, in which case use VAFPeaks                                        
                                                
     # if ploidy type fails, run with new ploidy params
-    if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="FAIL") {
+    if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="FAIL" | qc[id, pasteu(run.name, "ploidy_type_accepted")]=="FLAG") {
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "newploidy_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "newploidy_ploidy")]
-    }
-    # if ploidy type passes, and we have vafpeaks params, run with those (if we don't have vafpeaks here, use dpclust)
-    if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" &
+    } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" &
         # (qc[id, pasteu(run.name, "vafpeaks_score")] > thres.purity.diff &
-        !is.na(qc[id, pasteu(run.name, "vafpeaks_score")])) {
+        !is.na(qc[id, pasteu(run.name, "vafpeaks_score")])) { # if ploidy type passes, and we have vafpeaks params, run with those (if we don't have vafpeaks here, use dpclust)
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "vafpeaks_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "vafpeaks_ploidy")]
     } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" &
-               is.na(qc[id, pasteu(run.name, "vafpeaks_score")])) {
+               is.na(qc[id, pasteu(run.name, "vafpeaks_score")])) {  #if ploidy type passes, and we have no vafpeaks params
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
-    }
-    # if ploidy passes, and we're on the last run, overwrite vafpeaks params with dpclust params
-    # if ploidy has failed, it reruns with new ploidy as above (this could flipflop)
-    if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" & run.name=="run3") {
+    } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" & 
+               qc[id, pasteu(run.name, "nsuperclonalpeaks")]>0) { # ploidy passes and we have a superclonal cluster, use DPClust parameters
+      qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
+      qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
+    } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" &
+              qc[id, pasteu(run.name, "peak.closest.to.clonal")] <= 0.95 & 
+              qc[id, pasteu(run.name, "peak.closest.to.clonal")] >= 0.9 & 
+             qc[id, pasteu(run.name, "nsuperclonalpeaks")]==0) { # ploidy passes, no superclone, highest cluster is 0.9-0.95, use DPC params
+      qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
+      qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
+    } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" & 
+               run.name=="run3") { # if ploidy passes, and we're on the last run, overwrite vafpeaks params with DPClust parameters
+      qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
+      qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
+    } else if (qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS" & 
+               qc[id, pasteu(run.name, "lsegs_homodelall")] >= 100000000) { # if homdels are too large, use dpclust parameters not vafpeaks parameters
       qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
       qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
     }
                                                
-    # if homdels are too large, use dpclust parameters not vafpeaks parameters
-    if (qc[id, pasteu(run.name, "lsegs_homodelall")] >= 100000000) {
-      qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
-      qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
+    # if we have too much of the genome with homdels and the sample is diploid, switch to tetraploid
+    if (qc[id,pasteu(run.name,"dip.or.tetra")] == "dip" & 
+        qc[id, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest) { 
+         qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "newploidy_purity")]
+         qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "newploidy_ploidy")]
     }
+                                               
+    # check if the new purity we've chosen differs from the current ones by more than 5% (and it's passed ploidy), if not, pick others
+    # if none of them do, we don't rerun
+    if (abs(qc[id, pasteu(run.name, "reestimated_purity")] - qc[id, pasteu(run.name, "battenberg_purity")]) < 0.05 &
+        qc[id, pasteu(run.name, "ploidy_type_accepted")]=="PASS") {
+
+        vafpurity = qc[id, pasteu(run.name, "vafpeaks_purity")] == qc[id, pasteu(run.name, "reestimated_purity")]
+        dpcpurity = qc[id, pasteu(run.name, "dpclust_purity")] == qc[id, pasteu(run.name, "reestimated_purity")]
+
+        # if currently using vafpeaks purity for next run
+        if (!is.na(vafpurity) && vafpurity==T) {
+                # check if dpclust purity diffes from current purity estimate by more than 5%, if so, use it, if not, mark sample as having no new possible params
+                if (!is.na(dpcpurity) & (abs(qc[id, pasteu(run.name, "dpclust_purity")] - qc[id, pasteu(run.name, "battenberg_purity")]) >= 0.05)) {
+                        qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "dpclust_purity")]
+                        qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "dpclust_ploidy")]
+                } else {
+                        qc[id, pasteu(run.name, "reestimated_purity")] <- NA
+                        qc[id, pasteu(run.name, "reestimated_ploidy")] <- NA
+                }
+        } else if (!is.na(dpcpurity) && dpcpurity==T) { # else if currently using dpcpurity
+                # check if vafpeaks purity differs from current estimate by more than 5%, if so, use it
+                 if (!is.na(vafpurity) & (abs(qc[id, pasteu(run.name, "vafpeaks_purity")] - qc[id, pasteu(run.name, "battenberg_purity")]) >= 0.05)) {
+                        qc[id, pasteu(run.name, "reestimated_purity")] <- qc[id, pasteu(run.name, "vafpeaks_purity")]
+                        qc[id, pasteu(run.name, "reestimated_ploidy")] <- qc[id, pasteu(run.name, "vafpeaks_ploidy")]
+                } else {
+                        qc[id, pasteu(run.name, "reestimated_purity")] <- NA
+                        qc[id, pasteu(run.name, "reestimated_ploidy")] <- NA
+                }
+        }
+    }                                     
 
   }
 
   log.message("applying filters")
   filters <- list()
+  chrsizerun1 <- list()                                             
   # all chrs must be listed at least once in the subclones file
   filters$chrmissing <- ifelse(qc[ids, pasteu(run.name, "n_chrmissing")] != 0, "FAIL", "PASS")
-  # chr size must pass the required threshold listed in the qc confi file
-  filters$chrsizewrong <- ifelse(qc[ids, pasteu(run.name, "n_chrsizeincorrect")] != 0, "FAIL", "PASS")
-  # no single homdel can be larger than the threshold listed in the qc config file
+  # chr size must pass the required threshold listed in the qc config file
+  filters$chrsizewrong <- ifelse(qc[ids, pasteu(run.name, "n_chrsizeincorrect")] != 0, "FLAG", "PASS")
+  # chr size must pass the required threshold listed in the qc config file in first run (when rerunning in certain cases later)
+  # this is in a diff list so as not to interfere with filters list                                             
+  chrsizerun1$chrsizewrongrun1 <- ifelse(qc[ids, "run1_n_chrsizeincorrect"] != 0, "FLAG", "PASS")                                             
+  ## no single homdel can be larger than the threshold listed in the qc config file
   filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodellargest")] > thres.homodel.homodellargest, "FAIL", "PASS")
-
+  # if total length of homdels is > smaller threshold in qc config file (suggested 10MB), flag the sample
+  # and if total length of homdels is > larger threshold in qc config file (suggested 100MB), fail the sample    
+  #filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] <= thres.homodel.homodelall.flag, "PASS",
+  #                               ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.fail,"FAIL","FLAG"))
+  # if total fraction of subclonal homdels is <20%, pass the sample on homdels
+  #filters$homodeletions <- if (qc[ids, pasteu(run.name, "fgenome_homodelallsubclonal")] <= thres.homodel.homodelallsubclonal.fail) {
+  #  filters$homodeletions <- "PASS"                                            
+  #}                                            
+  #filters$homodeletions <-ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.fail, "FAIL", "PASS")                                              
+  # if total length of homdels is > smaller threshold in qc config file (suggested 10MB), flag the sample
+  #filters$homodeletions <- ifelse(qc[ids, pasteu(run.name, "lsegs_homodelall")] > thres.homodel.homodelall.flag, "FLAG", "PASS")                                            
   # there must exist a clonal peak between the boundaries in the qc config file, dependent on narrow or wide status of sample
   filters$noclonalpeak <- ifelse(qc[ids, pasteu(run.name, "nclonalpeaks")] == 0, "FAIL", "PASS")
   # there must be no superclonal peaks that are of a size larger than the threshold in the qc config file
   filters$superclonalpeaks <- ifelse(qc[ids, pasteu(run.name, "nsuperclonalpeaks")] != 0, "FAIL", "PASS")
 
   # vafpeaks filter must have passed or be FLAG in order for the sample to pass (ie if not enough mutations to assess, we only use other metrics to assess the call)
-  filters$vafpeaks <- ifelse(qc[ids, pasteu(run.name, "vafpeaks")] == "FAIL", "FAIL", "PASS")                                           
+  # (flag is only given if vafpeaks doesn't have enough mutations so can't pass or fail it)
+  #filters$vafpeaks <- ifelse(qc[ids, pasteu(run.name, "vafpeaks")] == "FAIL", "FAIL", "PASS")  
+  filters$vafpeaks <- qc[ids, pasteu(run.name, "vafpeaks")] # retain the FAIL, FLAG, and PASS options                                            
 
   # the ploidy call must be deemed correct, so if diploid, must have a ploidy classified as diploid through PCAWG eqn, and
   # can have no more than qc.config threshold of the genome between 0.5 boundary (if narrow sample (same boundary), or
@@ -472,18 +557,58 @@ qc_CNAqc <- function(
   # and if tetraploid, must have a ploidy classified as tetraploid through PCAWG eqn (psi_t>LOH*-2+2.9)=tetra, else dip), and
   # must have at least 10% of the genome at 1+0, 2+1, or 3+2 states, and
   # must have peaks of mutations in 2:2 regions with multiplicity 1 and 2
-  filters$ploidytype <- ifelse(qc[ids, pasteu(run.name,"ploidy_type_accepted")] == "PASS", "PASS", "FAIL")
+  filters$ploidytype <- ifelse(qc[ids, pasteu(run.name,"ploidy_type_accepted")] == "PASS", "PASS", "FLAG")
   # rest of the filters must be deemed ok
-  filters$basicfilterspassed <- ifelse(filters$chrmissing=="PASS" &
-                                         filters$chrsizewrong=="PASS" &
-                                         filters$homodeletions=="PASS" &
-                                         filters$noclonalpeak=="PASS" &
-                                         filters$superclonalpeaks=="PASS" &
-                                         (filters$vafpeaks=="PASS" | filters$vafpeaks=="FLAG"),"PASS","FAIL")
-
-  # classify the sample as having passed or failed
+  #filters$basicfilterspassed <- ifelse(filters$chrmissing=="PASS" &
+  #                                       filters$chrsizewrong=="PASS" &
+  #                                       filters$homodeletions=="PASS" &
+  #                                       filters$noclonalpeak=="PASS" &
+  #                                       filters$superclonalpeaks=="PASS" &
+  #                                       (filters$vafpeaks=="PASS" | filters$vafpeaks=="FLAG"),"PASS","FAIL")                                          
+                                  
+  # classify the sample as having passed, failed, or is flagged
+   # classify the sample as having passed, failed, or is flagged
   filters <- data.frame(filters, stringsAsFactors=F)
+                                               
+  # if any fail or flag exists at all, set that sample to rerun
   filters$overallfilter <- apply(filters, 1, get.worst.filter)
+
+  # but now overwrite those samples in these special cases that we don't want to rerun
+  # at this point they are marked with a flag or fail overall if any criteria has a flag or a fail 
+  # vafpeaks flag/fail but everything else is ok, we don't rerun 
+  filters$vafonly = (filters$vafpeaks == "FLAG" | filters$vafpeaks == "FAIL") &
+        filters$chrmissing == "PASS" &
+        (filters$chrsizewrong == "PASS" | filters$chrsizewrong == "FLAG") &
+        filters$homodeletions == "PASS" &
+        filters$ploidytype == "PASS" &
+        filters$noclonalpeak == "PASS" &
+        filters$superclonalpeaks == "PASS"
+  # chr length flagged but everything else is ok, if run==1, we rerun in the normal way    
+  # if chr length flagged and everything else is ok and run!=1, we check to see if the first run had a flag for chr size, 
+  # if so, this is long runs of homozygosity, so we don't rerun                                              
+  filters$chrsizeonly = (filters$vafpeaks == "FLAG" | filters$vafpeaks == "PASS") &                                    
+        filters$chrmissing == "PASS" &
+        filters$chrsizewrong == "FLAG" &
+        run!=1 &
+        chrsizerun1$chrsizewrongrun1 == "FLAG" &                                       
+        filters$homodeletions == "PASS" &
+        filters$ploidytype == "PASS" &
+        filters$noclonalpeak == "PASS" &
+        filters$superclonalpeaks == "PASS"
+  # homdel flagged but everything else is ok, we don't rerun                                             
+  filters$homdelflagonly = (filters$vafpeaks == "FLAG" | filters$vafpeaks == "PASS") &
+        filters$chrmissing == "PASS" &
+        (filters$chrsizewrong == "PASS" | filters$chrsizewrong == "FLAG") &
+        filters$homodeletions == "FLAG" &
+        filters$ploidytype == "PASS" &
+        filters$noclonalpeak == "PASS" &
+        filters$superclonalpeaks == "PASS"                                                  
+                                               
+  # set these exceptions as PASS                                             
+  filters$overallfilter[which(filters$vafonly == T | 
+                              filters$chrsizeonly == T |
+                              filters$homdelflagonly == T)] = "PASS"                                     
+                                               
   filters.qc <- filters
   dimnames(filters.qc) <- list(ids, pasteu(run.name, "filter", colnames(filters.qc)))
   qc <- data.frame(qc, filters.qc[rownames(qc), ])
